@@ -1,6 +1,14 @@
 # Reusable Components: Content Projection (`ng-content`) & Template Customization
 
-This guide documents the implementation of enterprise-grade reusable Angular components with a specific focus on **Multi-Slot Content Projection (`ng-content`)**, strictly aligned with **modern Angular (v22+)** paradigms.
+> [!IMPORTANT]
+> ### Strict Requirement: Adherence to Angular 22+
+> All code, components, services, templates, testing suites, and architectural patterns in this project must strictly adhere to the latest **Angular version 22 (v22+)** standards:
+> - **Standalone by Default**: Do not include redundant `standalone: true` flags; standalone is the native default for components, directives, and pipes.
+> - **Signal-Based Reactivity**: Use signal-based inputs (`input()`, `input.required()`) marked `readonly` (to satisfy `strictInputAccessModifiers`), signal queries (`viewChild()`, `contentChild()`), and functional outputs (`output()`). Never use legacy `@Input()` or `@Output() new EventEmitter()`.
+> - **Native Control Flow**: Exclusively use modern built-in control flow (`@if`, `@for`, `@switch`, `@let`) instead of legacy structural directives (`*ngIf`, `*ngFor`). Never import `CommonModule` solely for control flow.
+> - **Fine-Grained Change Detection**: Enforce `ChangeDetectionStrategy.OnPush` across all presentational and reusable components, paired with Angular Signals.
+> - **Modern Build & Test Tooling**: Adhere to the `@angular/build` application builder and Vitest unit testing harness (`@angular/build:unit-test`).
+> - **Zero Legacy Modules**: Do not introduce `NgModule` wrappers or obsolete lifecycle workarounds.
 
 ---
 
