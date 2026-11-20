@@ -1,8 +1,8 @@
 import { Component, signal } from '@angular/core';
-import { RouterOutlet } from '@angular/router';
+import { OrderSummaryPageComponent } from './features/orders/feature/order-summary-page.component';
 
 @Component({
-  imports: [RouterOutlet],
+  imports: [OrderSummaryPageComponent],
   selector: 'app-root',
   styleUrl: './app.css',
   templateUrl: './app.html',

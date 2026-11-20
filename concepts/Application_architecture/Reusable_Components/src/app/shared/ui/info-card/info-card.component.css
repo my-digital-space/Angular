@@ -1,0 +1,53 @@
+.card-container {
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+  background-color: #ffffff;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+  overflow: hidden;
+}
+
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding: 16px 20px;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.card-title {
+  margin: 0;
+  font-size: 1.125rem;
+  color: #0f172a;
+}
+
+.card-subtitle {
+  margin: 4px 0 0;
+  font-size: 0.875rem;
+  color: #64748b;
+}
+
+.dismiss-btn {
+  background: transparent;
+  border: none;
+  font-size: 1rem;
+  cursor: pointer;
+  color: #64748b;
+}
+
+.card-body {
+  padding: 20px;
+}
+
+.card-footer {
+  padding: 12px 20px;
+  background-color: #f8fafc;
+  border-top: 1px solid #e2e8f0;
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+/* Hides the footer bar completely if the parent did not provide [card-footer] */
+.card-footer:empty {
+  display: none;
+}

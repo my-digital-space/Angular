@@ -1,0 +1,29 @@
+@if (isVisible()) {
+  <app-info-card
+    title="Order #ORD-2026"
+    subtitle="Placed on November 19, 2026"
+    [dismissible]="true"
+    (dismissed)="isVisible.set(false)"
+  >
+    <!-- Custom HTML injected into [card-body] -->
+    <div card-body>
+      <p><strong>Customer:</strong> Vikram Sen</p>
+      <p><strong>Items:</strong> 2x Wireless Mechanical Keyboards</p>
+      <p><strong>Total Amount:</strong> ₹14,500</p>
+    </div>
+
+    <!-- Reusable ActionButtons injected into [card-footer] -->
+    <div card-footer>
+      <app-action-button
+        label="Cancel Order"
+        variant="danger"
+        (buttonClick)="cancelOrder()"
+      />
+      <app-action-button
+        label="Approve Shipment"
+        variant="primary"
+        (buttonClick)="approveOrder()"
+      />
+    </div>
+  </app-info-card>
+}

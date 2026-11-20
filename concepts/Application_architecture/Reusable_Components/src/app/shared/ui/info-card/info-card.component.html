@@ -1,0 +1,32 @@
+<article class="card-container">
+  <!-- Standardized Header -->
+  <header class="card-header">
+    <div>
+      <h3 class="card-title">{{ title() }}</h3>
+      @if (subtitle()) {
+        <p class="card-subtitle">{{ subtitle() }}</p>
+      }
+    </div>
+
+    @if (dismissible()) {
+      <button
+        type="button"
+        class="dismiss-btn"
+        aria-label="Close card"
+        (click)="onDismiss()"
+      >
+        ✕
+      </button>
+    }
+  </header>
+
+  <!-- Slot 1: Dynamic Body Content injected by the parent screen -->
+  <section class="card-body">
+    <ng-content select="[card-body]" />
+  </section>
+
+  <!-- Slot 2: Dynamic Footer Actions injected by the parent screen -->
+  <footer class="card-footer">
+    <ng-content select="[card-footer]" />
+  </footer>
+</article>
