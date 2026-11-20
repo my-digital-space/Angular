@@ -1,0 +1,111 @@
+<section class="checkout-card">
+  <div class="checkout-header">
+    <div>
+      <h2 class="checkout-title">Order Summary</h2>
+      <p class="checkout-subtitle">Component 2: Derived pricing reactively updated via Signals & computed()</p>
+    </div>
+    <span class="badge-role">Consumer Component</span>
+  </div>
+
+  <div class="cart-items-container">
+    @for (item of cartStore.items(); track item.productId) {
+      <div class="cart-item-row">
+        <div class="item-info">
+          <span class="item-name">{{ item.name }}</span>
+          <span class="item-quantity">Qty: {{ item.quantity }} × {{ item.unitPrice | currency:'INR':'symbol':'1.0-0' }}</span>
+        </div>
+        <div class="item-action-price">
+          <span class="item-line-total">{{ item.unitPrice * item.quantity | currency:'INR':'symbol':'1.0-0' }}</span>
+          <button
+            type="button"
+            class="remove-btn"
+            aria-label="Remove item"
+            title="Remove item"
+            (click)="cartStore.removeItem(item.productId)"
+          >
+            ✕
+          </button>
+        </div>
+      </div>
+    } @empty {
+      <div class="empty-state">
+        <p class="empty-message">Your cart is currently empty.</p>
+        <span class="empty-hint">Add items from the catalog above to view real-time calculations.</span>
+      </div>
+    }
+  </div>
+
+  <hr class="divider" />
+
+  <!-- Promo Code Input -->
+  <div class="promo-box">
+    <label class="promo-label" for="coupon-input">Promo Code</label>
+    <div class="promo-input-group">
+      <input
+        id="coupon-input"
+        type="text"
+        placeholder="Enter SAVE10"
+        [value]="couponInput()"
+        (input)="couponInput.set($any($event.target).value)"
+        (keyup.enter)="onApplyCoupon()"
+        class="coupon-field"
+      />
+      <button
+        type="button"
+        class="apply-btn"
+        (click)="onApplyCoupon()"
+      >
+        Apply
+      </button>
+    </div>
+    <div class="promo-hint-row">
+      <span class="promo-hint">Hint: try coupon <code>SAVE10</code> for 10% discount</span>
+      @if (cartStore.appliedCoupon(); as applied) {
+        <span class="applied-tag">✓ Applied: {{ applied }}</span>
+      }
+    </div>
+  </div>
+
+  <hr class="divider" />
+
+  <!-- Derived Pricing Breakdown -->
+  <div class="pricing-summary">
+    <div class="summary-line">
+      <span class="summary-label">Subtotal:</span>
+      <span class="summary-val">{{ cartStore.subtotal() | currency:'INR':'symbol':'1.0-0' }}</span>
+    </div>
+
+    <div class="summary-line discount-line" [class.has-discount]="cartStore.discountAmount() > 0">
+      <span class="summary-label">Discount:</span>
+      <span class="summary-val">-{{ cartStore.discountAmount() | currency:'INR':'symbol':'1.0-0' }}</span>
+    </div>
+
+    <div class="summary-line">
+      <span class="summary-label">Taxable Amount:</span>
+      <span class="summary-val">{{ cartStore.taxableAmount() | currency:'INR':'symbol':'1.0-0' }}</span>
+    </div>
+
+    <div class="summary-line">
+      <span class="summary-label">GST (18%):</span>
+      <span class="summary-val">{{ cartStore.gstAmount() | currency:'INR':'symbol':'1.0-0' }}</span>
+    </div>
+
+    <div class="summary-line grand-total-line">
+      <h3 class="grand-label">Grand Total:</h3>
+      <h3 class="grand-val">{{ cartStore.grandTotal() | currency:'INR':'symbol':'1.0-0' }}</h3>
+    </div>
+  </div>
+
+  <button
+    type="button"
+    class="place-order-btn"
+    [disabled]="cartStore.isCheckingOut() || cartStore.totalItemCount() === 0"
+    (click)="cartStore.submitOrder()"
+  >
+    @if (cartStore.isCheckingOut()) {
+      <span class="spinner"></span> Processing Order...
+    } @else {
+      Place Order ({{ cartStore.grandTotal() | currency:'INR':'symbol':'1.0-0' }})
+    }
+  </button>
+</section>

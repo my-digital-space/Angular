@@ -1,0 +1,48 @@
+<!-- Top Navigation Bar consuming CartStoreService totalItemCount -->
+<app-navbar />
+
+<main class="main-container">
+  <!-- Architectural Banner -->
+  <header class="hero-banner">
+    <div class="banner-badge">Angular 22+ Architecture Lab</div>
+    <h1 class="hero-title">Shared Service Pattern: Singleton State & Signals</h1>
+    <p class="hero-subtitle">
+      Demonstrating stateful business logic, reactive derived computations (<code>computed()</code>),
+      encapsulated writable signals, and cross-service HTTP orchestration without prop drilling.
+    </p>
+
+    <div class="architecture-flow-pill">
+      <div class="flow-step">
+        <span class="step-num">1</span>
+        <span>Product Catalog</span>
+        <span class="step-action">(Calls <code>addItem()</code>)</span>
+      </div>
+      <span class="flow-arrow">➔</span>
+      <div class="flow-step highlight">
+        <span class="step-num">2</span>
+        <span>CartStoreService</span>
+        <span class="step-action">(Root Singleton State)</span>
+      </div>
+      <span class="flow-arrow">➔</span>
+      <div class="flow-step">
+        <span class="step-num">3</span>
+        <span>Navbar & Checkout</span>
+        <span class="step-action">(Reads derived signals)</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- Interactive Dual-Column Workspace -->
+  <div class="workspace-grid">
+    <div class="catalog-column">
+      <app-product-list />
+    </div>
+
+    <div class="checkout-column">
+      <app-checkout-page />
+    </div>
+  </div>
+</main>
+
+<!-- Global Toast Notifications Container -->
+<app-toast-container />
