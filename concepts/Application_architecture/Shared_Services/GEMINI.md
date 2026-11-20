@@ -1,7 +1,7 @@
-# Angular 22+ Shared Services Architecture (Production-Level Implementation)
+# Angular 22+ Shared Services Architecture (Ticket Booking Production Implementation)
 
 > **Mandatory Instruction & Strict Version Adherence**  
-> This project strictly adheres to **Angular version 22+** standards, conventions, and idioms. All implementations utilize modern **Standalone Components**, the function-based **`inject()` API**, native **Angular Signals (`signal()`, `computed()`, `.asReadonly()`)**, **OnPush change detection**, new control flow syntax (`@for`, `@if`, `@empty`), and functional HTTP interceptors via `provideHttpClient()`. Legacy decorators (e.g., constructor-based DI parameter injection, `NgModule`, `@Input()` / `@Output()` chains for global state) are strictly avoided.
+> This project strictly adheres to **Angular version 22+** standards, conventions, and idioms. All implementations utilize modern **Standalone Components**, the function-based **`inject()` API**, native **Angular Signals (`signal()`, `computed()`, `.asReadonly()`)**, **OnPush change detection**, new control flow syntax (`@for`, `@if`), and zoneless-compatible testing with Vitest. Legacy decorators (such as constructor parameter injection, `NgModule`, or manual `@Input()` / `@Output()` chains for global state) are strictly avoided.
 
 ---
 
@@ -10,48 +10,47 @@
 1. [Architectural Overview: What is a Shared Service?](#1-architectural-overview-what-is-a-shared-service)
 2. [Why Shared Services are Required (Problems Without Them)](#2-why-shared-services-are-required-problems-without-them)
 3. [How Dependency Injection Works in Angular 22+](#3-how-dependency-injection-works-in-angular-22)
-4. [Service Scoping Matrix: Root vs Route vs Component](#4-service-scoping-matrix-root-vs-route-vs-component)
-5. [Production Architecture: Stateful Business Logic with Signals](#5-production-architecture-stateful-business-logic-with-signals)
-6. [Flow Line & Sequence Diagrams](#6-flow-line--sequence-diagrams)
+4. [Foundation Level: Simple Notification Service (`NotifyService`)](#4-foundation-level-simple-notification-service-notifyservice)
+5. [Production Level: Stateful Business Logic Service (`TicketBookingService`)](#5-production-level-stateful-business-logic-service-ticketbookingservice)
+6. [Why This Pattern is So Clean (Core Architectural Principles)](#6-why-this-pattern-is-so-clean-core-architectural-principles)
+7. [Flow Line & Sequence Diagrams](#7-flow-line--sequence-diagrams)
    - [Diagram 1: Component & Service Injection Topology](#diagram-1-component--service-injection-topology)
    - [Diagram 2: Reactive State & Computed Calculation Flow](#diagram-2-reactive-state--computed-calculation-flow)
-   - [Diagram 3: End-to-End Order Checkout Sequence](#diagram-3-end-to-end-order-checkout-sequence)
-7. [Complete Codebase Walkthrough](#7-complete-codebase-walkthrough)
-   - [Domain Models (`cart.model.ts`)](#domain-models-cartmodelts)
-   - [Stateless Notification Service (`toast.service.ts`)](#stateless-notification-service-toastservicets)
-   - [Production Shared Service (`cart-store.service.ts`)](#production-shared-service-cart-storeservicets)
-   - [Mock API Interceptor (`mock-api.interceptor.ts`)](#mock-api-interceptor-mock-apiinterceptorts)
-   - [Header Navbar Component (`navbar.component.ts`)](#header-navbar-component-navbarcomponentts)
-   - [Product Catalog Component (`product-list.component.ts`)](#product-catalog-component-product-listcomponentts)
-   - [Checkout Summary Page (`checkout-page.component.ts`)](#checkout-summary-page-checkout-pagecomponentts)
-   - [Global Toast Container (`toast-container.component.ts`)](#global-toast-container-toast-containercomponentts)
-   - [Application Configuration (`app.config.ts`)](#application-configuration-appconfigts)
-8. [Architectural Tradeoffs: Advantages vs Disadvantages](#8-architectural-tradeoffs-advantages-vs-disadvantages)
-9. [Real-World Enterprise Patterns](#9-real-world-enterprise-patterns)
-10. [Development, Testing & Verification Guide](#10-development-testing--verification-guide)
+   - [Diagram 3: Booking & Confirmation Flow](#diagram-3-booking--confirmation-flow)
+8. [Complete Codebase Walkthrough](#8-complete-codebase-walkthrough)
+   - [Notification Service (`notify.service.ts`)](#notification-service-notifyservicets)
+   - [Notification Banner (`notify-banner.component.ts`)](#notification-banner-notify-bannercomponentts)
+   - [Ticket Booking Shared Service (`ticket-booking.service.ts`)](#ticket-booking-shared-service-ticket-bookingservicets)
+   - [Top Navbar Component (`navbar.component.ts`)](#top-navbar-component-navbarcomponentts)
+   - [Booking Summary Card (`booking-page.component.ts`)](#booking-summary-card-booking-pagecomponentts)
+   - [Arbitrary Triggering Page (`profile-page.component.ts`)](#arbitrary-triggering-page-profile-pagecomponentts)
+   - [Application Shell & Configuration (`app.ts` & `app.config.ts`)](#application-shell--configuration-appts--appconfigts)
+9. [Service Scoping Matrix: Root vs Route vs Component](#9-service-scoping-matrix-root-vs-route-vs-component)
+10. [Advantages & Tradeoffs Analysis](#10-advantages--tradeoffs-analysis)
+11. [Development, Testing & Verification Guide](#11-development-testing--verification-guide)
 
 ---
 
 ## 1. Architectural Overview: What is a Shared Service?
 
-A **shared service** in Angular is an injectable TypeScript class decorated with `@Injectable({ providedIn: 'root' })` that acts as a **single source of truth** for common business logic, shared application state, or reusable utilities across multiple components and features.
+A **shared service** in Angular is an injectable TypeScript class decorated with `@Injectable({ providedIn: 'root' })` that acts as a **single source of truth** for common business logic, reactive state, or reusable utilities across multiple components and features.
 
 In modern **Angular 22+**, shared services leverage:
-1. **Dependency Injection (`inject()`)**: Replaces verbose constructor injection with composable, type-safe injection anywhere in injection contexts.
-2. **Angular Signals (`signal()`, `computed()`, `.asReadonly()`)**: Enables fine-grained reactivity without the overhead of manual subscription management or accidental zone-related performance bottlenecks.
+1. **Dependency Injection (`inject()`)**: Replaces verbose constructor injection with composable, type-safe injection anywhere inside injection contexts.
+2. **Angular Signals (`signal()`, `computed()`, `.asReadonly()`)**: Enables fine-grained reactivity without the overhead of manual subscription management, RxJS leak risks, or accidental zone-related performance bottlenecks.
 3. **Encapsulated State Mutation**: Private writable signals prevent external consumers from directly corrupting data structures, exposing strictly read-only signals and explicit business methods.
 
 ---
 
 ## 2. Why Shared Services are Required (Problems Without Them)
 
-Without shared services, components that live in different branches of the component tree (such as a top navigation bar, a product catalog card, and a checkout summary page) have no clean way to share state or business rules.
+Without shared services, components that live in different branches of the component tree (such as a top navigation bar and a booking summary card) have no clean way to share state or business rules.
 
 ### Without Shared Services (Prop Drilling & Duplication)
 
 ```
 ┌───────────────────────────────────────┐
-│           AppRootComponent            │ <--- Forced to manage state it doesn't even use!
+│           AppRootComponent            │ <--- Forced to hold state it doesn't even use!
 └──────────────┬─────────────────┬──────┘
                │ @Input()        │ @Input()
                ▼                 ▼
@@ -61,15 +60,15 @@ Without shared services, components that live in different branches of the compo
                                  │ @Input()
                                  ▼
                           ┌─────────────┐
-                          │  CartBadge  │ <--- Needs cart count from 3 levels up
+                          │ TicketBadge │ <--- Needs ticket count from 3 levels up
                           └─────────────┘
 ```
 
 ### Real-World Pitfalls Avoided:
 * **Prop Drilling**: Passing data through 4 or 5 intermediate parent components that do not even need the data just to reach a deeply nested child component.
-* **Duplicated Business Rules**: Writing tax calculation, discount eligibility, or permission checks inside multiple separate components. When a rule changes, one component is updated while others continue calculating stale or wrong numbers.
-* **Out-of-Sync UI State**: When a user adds an item to a shopping cart in one component, the cart counter in the header fails to update because each component holds its own isolated copy of the data.
-* **Bloated Components**: Components expand to hundreds of lines because they mix presentation rendering with HTTP requests, data transformation, and error handling.
+* **Duplicated Business Rules**: Writing tax calculation, GST rate (18%), or ticket pricing (₹500) inside multiple separate components. When a rule changes, one component is updated while others calculate wrong numbers.
+* **Out-of-Sync UI State**: When a user increments tickets in the booking card, the badge in the header fails to update because each component holds its own isolated copy of the data.
+* **Bloated Components**: Components expand to hundreds of lines because they mix UI rendering with price calculations, timer logic, and business validations.
 
 ---
 
@@ -81,75 +80,91 @@ When a class is decorated with `@Injectable({ providedIn: 'root' })`, Angular cr
 ┌────────────────────────────────────────────────────────┐
 │               Root Environment Injector                │
 │  ┌──────────────────────────────────────────────────┐  │
-│  │           CartStoreService (Singleton)           │  │
+│  │        TicketBookingService (Singleton)          │  │
 │  └────────────────────────▲─────────────────────────┘  │
 └───────────────────────────┼────────────────────────────┘
-                            │ inject(CartStoreService)
-          ┌─────────────────┼──────────────────┐
-          │                 │                  │
-┌─────────┴─────────┐ ┌─────┴─────────┐ ┌──────┴──────────────┐
-│  NavbarComponent  │ │  ProductList  │ │ CheckoutPageComponent│
-└───────────────────┘ └───────────────┘ └──────────────────────┘
+                            │ inject(TicketBookingService)
+          ┌─────────────────┴──────────────────┐
+          │                                    │
+┌─────────┴─────────┐                ┌─────────┴─────────┐
+│  NavbarComponent  │                │ BookingPageComponent│
+└───────────────────┘                └───────────────────┘
 ```
 
-* **Tree-Shakable by Default**: If no component, directive, or other service invokes `inject(CartStoreService)`, Angular's compiler completely tree-shakes and removes the service from the final production bundle.
-* **Shared In-Memory State**: Every component calling `inject(CartStoreService)` receives the exact same in-memory instance, meaning state mutations triggered in `ProductListComponent` are instantaneously and reactively reflected in `NavbarComponent` and `CheckoutPageComponent`.
+* **Tree-Shakable by Default**: If no component, directive, or service invokes `inject(TicketBookingService)`, Angular's compiler removes the service from the final bundle.
+* **Shared In-Memory State**: Every component calling `inject(TicketBookingService)` receives the exact same in-memory instance, meaning state mutations triggered in `BookingPageComponent` are instantaneously and reactively reflected in `NavbarComponent`.
 
 ---
 
-## 4. Service Scoping Matrix: Root vs Route vs Component
+## 4. Foundation Level: Simple Notification Service (`NotifyService`)
 
-Not every shared service should live forever in `root`. Angular provides granular lifetime scoping:
+At the foundation level, a shared service encapsulates a focused, app-wide capability using a single string signal:
+`[ Any Button ] ──► calls notify.show("Saved!") ──► [ Banner shows "Saved!" for 3s ]`
 
-| Scope | How to Configure | Lifetime & Behavior | When to Use |
-| :--- | :--- | :--- | :--- |
-| **Root Singleton** | `@Injectable({ providedIn: 'root' })` | Created once upon first injection; lives for the lifespan of the browser tab/session. | Global Auth state, user profile, shopping cart, global toast notifications, application caching. |
-| **Route-Scoped** | `providers: [WizardService]` inside a route configuration | Created when entering the route; automatically destroyed when leaving the route. | Multi-step checkout, wizard flows, onboarding funnels where state should reset on route exit. |
-| **Component-Scoped** | `providers: [TableStateService]` inside `@Component()` | A brand-new instance is created for each instance of that component and its child subtree. | Reusable widgets (e.g., two independent paginated data tables rendered on the same dashboard). |
-
----
-
-## 5. Production Architecture: Stateful Business Logic with Signals
-
-In large-scale enterprise applications, shared services manage complex domain state, derived calculations, API persistence, and cross-service orchestration.
-
-### The Enterprise Shopping Cart & Pricing Engine
-This implementation showcases three distinct consumers interacting with the singleton `CartStoreService`:
-1. **Product Catalog**: Dispatches `addItem(product)` mutations to the shared cart.
-2. **Top Navbar**: Reads the live count from `cartStore.totalItemCount()` derived signal.
-3. **Checkout Page**: Consumes `items()`, `subtotal()`, `discountAmount()`, `gstAmount()`, `grandTotal()`, applies coupons via `applyCoupon()`, and submits orders via `submitOrder()`.
-4. **Cross-Service DI**: `CartStoreService` injects both Angular's `HttpClient` and the shared `ToastService` to surface UI alerts upon mutations.
+- **State (`messageSignal`)**: Holds current notification text (`string | null`).
+- **Read-Only Exposure (`message`)**: Exposes `.asReadonly()` for templates to read reactively.
+- **Auto-Dismissal**: Sets a 3-second timer to reset the message to `null`.
 
 ---
 
-## 6. Flow Line & Sequence Diagrams
+## 5. Production Level: Stateful Business Logic Service (`TicketBookingService`)
+
+In production applications, shared services manage stateful business rules and derived calculations:
+* **State (`countSignal`)**: Tracks selected ticket count (defaults to `1`).
+* **Derived Business Logic (`computed()`)**:
+  - `subtotal()` = `ticketCount * 500`
+  - `gstAmount()` = `Math.round(subtotal * 0.18)`
+  - `finalTotal()` = `subtotal + gstAmount`
+* **Safe Actions**:
+  - `addTicket()`: Increments ticket count.
+  - `removeTicket()`: Decrements count (never below 1).
+  - `confirmBooking()`: Calls `notify.show(...)` with the total price and resets count to 1.
+* **Cross-Service DI**: `TicketBookingService` injects `NotifyService` to display booking confirmations.
+
+---
+
+## 6. Why This Pattern is So Clean (Core Architectural Principles)
+
+1. **Zero Math in HTML or Components**:
+   - Neither `NavbarComponent` nor `BookingPageComponent` knows that a ticket costs ₹500 or that GST is 18%.
+   - All rules, constants, and math live exclusively in `TicketBookingService`.
+2. **Automatic Reactive Updates**:
+   - Clicking `+` inside `BookingPageComponent` updates `countSignal`.
+   - Angular Signals automatically re-evaluate `subtotal()`, `gstAmount()`, `finalTotal()`, and the count displayed in `NavbarComponent` simultaneously.
+3. **Immutability & Encapsulation**:
+   - Components cannot write to signals directly (`countSignal.set(...)` is private).
+   - State mutations can only happen through semantic, validated methods (`addTicket()`, `removeTicket()`).
+
+---
+
+## 7. Flow Line & Sequence Diagrams
 
 ### Diagram 1: Component & Service Injection Topology
 
 ```mermaid
 flowchart TD
     subgraph RootInjector["Root Environment Injector (Singletons)"]
-        TS["ToastService (Messages Signal)"]
-        CS["CartStoreService (Stateful Business Logic)"]
+        NS["NotifyService (messageSignal)"]
+        TBS["TicketBookingService (countSignal, computed)"]
     end
 
     subgraph ConsumerComponents["Unrelated UI Components"]
-        NAV["NavbarComponent (Layout)"]
-        CAT["ProductListComponent (Catalog Feature)"]
-        CHK["CheckoutPageComponent (Checkout Feature)"]
-        TOAST["ToastContainerComponent (Shared UI)"]
+        NAV["NavbarComponent (Shows ticket count)"]
+        BOOK["BookingPageComponent (Quantity & Pricing Card)"]
+        PROF["ProfilePageComponent (Unrelated Page)"]
+        BANNER["NotifyBannerComponent (Global Alert)"]
     end
 
-    CS -->|"inject(ToastService)"| TS
-    NAV -->|"inject(CartStoreService)"| CS
-    CAT -->|"inject(CartStoreService)"| CS
-    CHK -->|"inject(CartStoreService)"| CS
-    TOAST -->|"inject(ToastService)"| TS
+    TBS -->|"inject(NotifyService)"| NS
+    NAV -->|"inject(TicketBookingService)"| TBS
+    BOOK -->|"inject(TicketBookingService)"| TBS
+    PROF -->|"inject(NotifyService)"| NS
+    BANNER -->|"inject(NotifyService)"| NS
 
     classDef service fill:#1e293b,stroke:#3b82f6,stroke-width:2px,color:#f8fafc;
     classDef comp fill:#f8fafc,stroke:#64748b,stroke-width:1.5px,color:#0f172a;
-    class TS,CS service;
-    class NAV,CAT,CHK,TOAST comp;
+    class NS,TBS service;
+    class NAV,BOOK,PROF,BANNER comp;
 ```
 
 ---
@@ -158,284 +173,166 @@ flowchart TD
 
 ```mermaid
 flowchart LR
-    subgraph PrivateWritableState["Private Encapsulated State"]
-        ITEMS["itemsSignal: CartItem[]"]
-        COUPON["couponCodeSignal: string | null"]
-        BUSY["isCheckingOutSignal: boolean"]
+    subgraph State["Private State (signal)"]
+        COUNT["countSignal: signal(1)"]
     end
 
-    subgraph DerivedComputations["Derived Business Logic (computed())"]
-        COUNT["totalItemCount()"]
-        SUBTOTAL["subtotal()"]
-        DISCOUNT["discountAmount()"]
-        TAXABLE["taxableAmount()"]
-        GST["gstAmount()"]
-        GRAND["grandTotal()"]
+    subgraph Derived["Derived Business Calculations (computed)"]
+        SUBTOTAL["subtotal = count * 500"]
+        GST["gstAmount = subtotal * 18%"]
+        TOTAL["finalTotal = subtotal + gstAmount"]
     end
 
-    ITEMS --> COUNT
-    ITEMS --> SUBTOTAL
-    COUPON --> DISCOUNT
-    SUBTOTAL --> DISCOUNT
-    SUBTOTAL --> TAXABLE
-    DISCOUNT --> TAXABLE
-    TAXABLE --> GST
-    TAXABLE --> GRAND
-    GST --> GRAND
+    subgraph Consumers["Subscribed UI Outputs"]
+        NAV_UI["Navbar: {{ booking.ticketCount() }}"]
+        SUB_UI["Card Subtotal: ₹{{ booking.subtotal() }}"]
+        GST_UI["Card GST: ₹{{ booking.gstAmount() }}"]
+        TOTAL_UI["Card Total: ₹{{ booking.finalTotal() }}"]
+    end
+
+    COUNT --> SUBTOTAL
+    COUNT --> NAV_UI
+    SUBTOTAL --> GST
+    SUBTOTAL --> TOTAL
+    GST --> TOTAL
+    SUBTOTAL --> SUB_UI
+    GST --> GST_UI
+    TOTAL --> TOTAL_UI
 
     classDef stateNode fill:#eff6ff,stroke:#2563eb,stroke-width:2px,color:#1e3a8a;
     classDef compNode fill:#f0fdf4,stroke:#16a34a,stroke-width:2px,color:#14532d;
-    class ITEMS,COUPON,BUSY stateNode;
-    class COUNT,SUBTOTAL,DISCOUNT,TAXABLE,GST,GRAND compNode;
+    classDef uiNode fill:#f8fafc,stroke:#64748b,stroke-width:1.5px,color:#0f172a;
+    class COUNT stateNode;
+    class SUBTOTAL,GST,TOTAL compNode;
+    class NAV_UI,SUB_UI,GST_UI,TOTAL_UI uiNode;
 ```
 
 ---
 
-### Diagram 3: End-to-End Order Checkout Sequence
+### Diagram 3: Booking & Confirmation Flow
 
 ```mermaid
 sequenceDiagram
     autonumber
-    actor User as Customer
-    participant Catalog as ProductListComponent
-    participant Cart as CartStoreService
-    participant Toast as ToastService
-    participant Backend as MockApiInterceptor (/api/v1/checkout)
-    participant Checkout as CheckoutPageComponent
+    actor User as Attendee
+    participant Card as BookingPageComponent
+    participant TicketService as TicketBookingService
+    participant NotifyService as NotifyService
+    participant Banner as NotifyBannerComponent
+    participant Navbar as NavbarComponent
 
-    User->>Catalog: Clicks "Add to Cart"
-    Catalog->>Cart: addItem({ productId, name, unitPrice })
-    Cart->>Cart: itemsSignal.update(...)
-    Cart->>Toast: show('Added ... to cart', 'success')
-    Toast-->>User: Toast alert displayed
+    User->>Card: Clicks "+" (Add Ticket)
+    Card->>TicketService: addTicket()
+    TicketService->>TicketService: countSignal.update(c => c + 1)
+    TicketService-->>Navbar: Reactive re-render: ticketCount() = 2
+    TicketService-->>Card: Reactive re-render: subtotal = ₹1000, finalTotal = ₹1180
 
-    User->>Checkout: Enters "SAVE10" & clicks "Apply"
-    Checkout->>Cart: applyCoupon('SAVE10')
-    Cart->>Cart: couponCodeSignal.set('SAVE10')
-    Cart-->>Checkout: Reactive re-calculation of discountAmount & grandTotal
-
-    User->>Checkout: Clicks "Place Order"
-    Checkout->>Cart: submitOrder()
-    Cart->>Cart: isCheckingOutSignal.set(true)
-    Cart->>Backend: HTTP POST /api/v1/checkout (payload)
-    Backend-->>Cart: 200 OK (OrderReceipt: ORD-XXXXXX)
-    Cart->>Cart: itemsSignal.set([]), couponCodeSignal.set(null)
-    Cart->>Toast: show('Order ORD-XXXXXX confirmed!', 'success')
-    Cart->>Cart: isCheckingOutSignal.set(false)
-    Toast-->>User: Success Notification
+    User->>Card: Clicks "Book Now"
+    Card->>TicketService: confirmBooking()
+    TicketService->>NotifyService: show("Booked 2 ticket(s) for ₹1180!")
+    NotifyService->>NotifyService: messageSignal.set(text)
+    TicketService->>TicketService: countSignal.set(1) (Reset to 1)
+    NotifyService-->>Banner: Banner displays notification
+    TicketService-->>Navbar: Reactive re-render: ticketCount() = 1
+    Note over NotifyService,Banner: After 3000ms: messageSignal.set(null)
+    NotifyService-->>Banner: Banner automatically hides
 ```
 
 ---
 
-## 7. Complete Codebase Walkthrough
+## 8. Complete Codebase Walkthrough
 
-### Domain Models (`cart.model.ts`)
-[cart.model.ts](file:///d:/MyCode/My_GitHub/my-digital-space/Angular/concepts/Application_architecture/Shared_Services/src/app/shared/data-access/cart/cart.model.ts)
-```typescript
-export interface CartItem {
-  productId: string;
-  name: string;
-  unitPrice: number;
-  quantity: number;
-}
-
-export interface OrderReceipt {
-  orderId: string;
-  paidAmount: number;
-  timestamp: string;
-}
-```
-
-### Stateless Notification Service (`toast.service.ts`)
-[toast.service.ts](file:///d:/MyCode/My_GitHub/my-digital-space/Angular/concepts/Application_architecture/Shared_Services/src/app/core/services/toast.service.ts)
+### Notification Service (`notify.service.ts`)
+[notify.service.ts](file:///d:/MyCode/My_GitHub/my-digital-space/Angular/concepts/Application_architecture/Shared_Services/src/app/core/services/notify.service.ts)
 ```typescript
 import { Injectable, signal } from '@angular/core';
 
-export type ToastType = 'success' | 'error' | 'info';
-
-export interface ToastMessage {
-  id: number;
-  text: string;
-  type: ToastType;
-}
-
 @Injectable({
   providedIn: 'root'
 })
-export class ToastService {
-  private readonly messagesSignal = signal<ToastMessage[]>([]);
-  readonly messages = this.messagesSignal.asReadonly();
+export class NotifyService {
+  // Holds the current notification text (null = hidden)
+  private readonly messageSignal = signal<string | null>(null);
 
-  show(text: string, type: ToastType = 'info', durationMs = 3000): void {
-    const id = Date.now() + Math.floor(Math.random() * 1000);
-    const newToast: ToastMessage = { id, text, type };
+  // Public read-only version for the HTML to read
+  readonly message = this.messageSignal.asReadonly();
 
-    this.messagesSignal.update((current) => [...current, newToast]);
-    setTimeout(() => this.dismiss(id), durationMs);
-  }
-
-  dismiss(id: number): void {
-    this.messagesSignal.update((current) =>
-      current.filter((toast) => toast.id !== id)
-    );
+  show(text: string): void {
+    this.messageSignal.set(text);
+    // Hide automatically after 3 seconds
+    setTimeout(() => {
+      this.messageSignal.set(null);
+    }, 3000);
   }
 }
 ```
 
-### Production Shared Service (`cart-store.service.ts`)
-[cart-store.service.ts](file:///d:/MyCode/My_GitHub/my-digital-space/Angular/concepts/Application_architecture/Shared_Services/src/app/shared/data-access/cart/cart-store.service.ts)
+### Notification Banner (`notify-banner.component.ts`)
+[notify-banner.component.ts](file:///d:/MyCode/My_GitHub/my-digital-space/Angular/concepts/Application_architecture/Shared_Services/src/app/shared/ui/notify-banner/notify-banner.component.ts)
+```typescript
+import { Component, ChangeDetectionStrategy, inject } from '@angular/core';
+import { NotifyService } from '../../../core/services/notify.service';
+
+@Component({
+  selector: 'app-notify-banner',
+  standalone: true,
+  templateUrl: './notify-banner.component.html',
+  styleUrl: './notify-banner.component.css',
+  changeDetection: ChangeDetectionStrategy.OnPush
+})
+export class NotifyBannerComponent {
+  // Inject the service so the HTML can read notify.message()
+  protected readonly notify = inject(NotifyService);
+}
+```
+
+### Ticket Booking Shared Service (`ticket-booking.service.ts`)
+[ticket-booking.service.ts](file:///d:/MyCode/My_GitHub/my-digital-space/Angular/concepts/Application_architecture/Shared_Services/src/app/shared/data-access/ticket-booking.service.ts)
 ```typescript
 import { Injectable, computed, inject, signal } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
-import { catchError, finalize, of, tap } from 'rxjs';
-import { CartItem, OrderReceipt } from './cart.model';
-import { ToastService } from '../../../core/services/toast.service';
+import { NotifyService } from '../../core/services/notify.service';
 
 @Injectable({
   providedIn: 'root'
 })
-export class CartStoreService {
-  private readonly http = inject(HttpClient);
-  private readonly toast = inject(ToastService);
+export class TicketBookingService {
+  private readonly notify = inject(NotifyService);
+  private readonly PRICE_PER_TICKET = 500;
   private readonly GST_RATE = 0.18;
 
-  // 1. Private Writable State (Encapsulated)
-  private readonly itemsSignal = signal<CartItem[]>([
-    { productId: 'PRD-01', name: 'Ergonomic Split Keyboard', unitPrice: 8500, quantity: 1 }
-  ]);
-  private readonly couponCodeSignal = signal<string | null>(null);
-  private readonly isCheckingOutSignal = signal<boolean>(false);
+  // 1. STATE: Tracks how many tickets are selected
+  private readonly countSignal = signal<number>(1);
+  readonly ticketCount = this.countSignal.asReadonly();
 
-  // 2. Public Read-Only Signals
-  readonly items = this.itemsSignal.asReadonly();
-  readonly appliedCoupon = this.couponCodeSignal.asReadonly();
-  readonly isCheckingOut = this.isCheckingOutSignal.asReadonly();
+  // 2. DERIVED BUSINESS LOGIC: Automatically recalculates when countSignal changes
+  readonly subtotal = computed(() => this.countSignal() * this.PRICE_PER_TICKET);
+  readonly gstAmount = computed(() => Math.round(this.subtotal() * this.GST_RATE));
+  readonly finalTotal = computed(() => this.subtotal() + this.gstAmount());
 
-  // 3. Derived Business Calculations (Memoized automatically by computed())
-  readonly totalItemCount = computed(() =>
-    this.itemsSignal().reduce((total, item) => total + item.quantity, 0)
-  );
-
-  readonly subtotal = computed(() =>
-    this.itemsSignal().reduce((sum, item) => sum + item.unitPrice * item.quantity, 0)
-  );
-
-  readonly discountAmount = computed(() => {
-    const code = this.couponCodeSignal();
-    if (code === 'SAVE10') {
-      return Math.round(this.subtotal() * 0.10);
-    }
-    return 0;
-  });
-
-  readonly taxableAmount = computed(() =>
-    Math.max(0, this.subtotal() - this.discountAmount())
-  );
-
-  readonly gstAmount = computed(() =>
-    Math.round(this.taxableAmount() * this.GST_RATE)
-  );
-
-  readonly grandTotal = computed(() =>
-    this.taxableAmount() + this.gstAmount()
-  );
-
-  // 4. Business Mutation Methods
-  addItem(product: Omit<CartItem, 'quantity'>): void {
-    this.itemsSignal.update((currentItems) => {
-      const existingIndex = currentItems.findIndex(
-        (i) => i.productId === product.productId
-      );
-      if (existingIndex > -1) {
-        return currentItems.map((item, idx) =>
-          idx === existingIndex ? { ...item, quantity: item.quantity + 1 } : item
-        );
-      }
-      return [...currentItems, { ...product, quantity: 1 }];
-    });
-    this.toast.show(`Added "${product.name}" to cart`, 'success');
+  // 3. ACTIONS: Safe methods to update the state
+  addTicket(): void {
+    this.countSignal.update((current) => current + 1);
   }
 
-  removeItem(productId: string): void {
-    this.itemsSignal.update((current) =>
-      current.filter((item) => item.productId !== productId)
-    );
-    this.toast.show('Item removed from cart', 'info');
+  removeTicket(): void {
+    // Prevent going below 1 ticket
+    if (this.countSignal() > 1) {
+      this.countSignal.update((current) => current - 1);
+    }
   }
 
-  applyCoupon(rawCode: string): boolean {
-    const normalized = rawCode.trim().toUpperCase();
-    if (normalized === 'SAVE10') {
-      this.couponCodeSignal.set(normalized);
-      this.toast.show('Coupon SAVE10 applied (10% off)', 'success');
-      return true;
-    }
-    this.toast.show('Invalid promo code', 'error');
-    return false;
-  }
-
-  submitOrder(): void {
-    if (this.itemsSignal().length === 0 || this.isCheckingOutSignal()) {
-      return;
-    }
-
-    this.isCheckingOutSignal.set(true);
-
-    const payload = {
-      items: this.itemsSignal(),
-      coupon: this.couponCodeSignal(),
-      totalPaid: this.grandTotal()
-    };
-
-    this.http
-      .post<OrderReceipt>('/api/v1/checkout', payload)
-      .pipe(
-        tap((receipt) => {
-          this.itemsSignal.set([]);
-          this.couponCodeSignal.set(null);
-          this.toast.show(`Order ${receipt.orderId} confirmed!`, 'success');
-        }),
-        catchError(() => {
-          this.toast.show('Checkout failed. Please try again.', 'error');
-          return of(null);
-        }),
-        finalize(() => this.isCheckingOutSignal.set(false))
-      )
-      .subscribe();
+  confirmBooking(): void {
+    this.notify.show(`Booked ${this.ticketCount()} ticket(s) for ₹${this.finalTotal()}!`);
+    this.countSignal.set(1); // Reset after booking
   }
 }
 ```
 
-### Mock API Interceptor (`mock-api.interceptor.ts`)
-[mock-api.interceptor.ts](file:///d:/MyCode/My_GitHub/my-digital-space/Angular/concepts/Application_architecture/Shared_Services/src/app/core/interceptors/mock-api.interceptor.ts)
-```typescript
-import { HttpInterceptorFn, HttpResponse } from '@angular/common/http';
-import { delay, of } from 'rxjs';
-import { OrderReceipt } from '../../shared/data-access/cart/cart.model';
-
-export const mockApiInterceptor: HttpInterceptorFn = (req, next) => {
-  if (req.url === '/api/v1/checkout' && req.method === 'POST') {
-    const body = req.body as { items: unknown[]; coupon: string | null; totalPaid: number };
-    const receipt: OrderReceipt = {
-      orderId: `ORD-${Math.floor(100000 + Math.random() * 900000)}`,
-      paidAmount: body?.totalPaid ?? 0,
-      timestamp: new Date().toISOString()
-    };
-
-    return of(new HttpResponse({ status: 200, body: receipt })).pipe(
-      delay(600)
-    );
-  }
-
-  return next(req);
-};
-```
-
-### Header Navbar Component (`navbar.component.ts`)
+### Top Navbar Component (`navbar.component.ts`)
 [navbar.component.ts](file:///d:/MyCode/My_GitHub/my-digital-space/Angular/concepts/Application_architecture/Shared_Services/src/app/core/layout/navbar/navbar.component.ts)
 ```typescript
 import { Component, ChangeDetectionStrategy, inject } from '@angular/core';
-import { CartStoreService } from '../../../shared/data-access/cart/cart-store.service';
+import { TicketBookingService } from '../../../shared/data-access/ticket-booking.service';
 
 @Component({
   selector: 'app-navbar',
@@ -445,149 +342,109 @@ import { CartStoreService } from '../../../shared/data-access/cart/cart-store.se
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class NavbarComponent {
-  protected readonly cartStore = inject(CartStoreService);
+  protected readonly booking = inject(TicketBookingService);
 }
 ```
 
-### Product Catalog Component (`product-list.component.ts`)
-[product-list.component.ts](file:///d:/MyCode/My_GitHub/my-digital-space/Angular/concepts/Application_architecture/Shared_Services/src/app/features/catalog/product-list.component.ts)
+### Booking Summary Card (`booking-page.component.ts`)
+[booking-page.component.ts](file:///d:/MyCode/My_GitHub/my-digital-space/Angular/concepts/Application_architecture/Shared_Services/src/app/features/booking/booking-page.component.ts)
 ```typescript
 import { Component, ChangeDetectionStrategy, inject } from '@angular/core';
-import { CurrencyPipe } from '@angular/common';
-import { CartStoreService } from '../../shared/data-access/cart/cart-store.service';
+import { TicketBookingService } from '../../shared/data-access/ticket-booking.service';
 
 @Component({
-  selector: 'app-product-list',
+  selector: 'app-booking-page',
   standalone: true,
-  imports: [CurrencyPipe],
-  templateUrl: './product-list.component.html',
-  styleUrl: './product-list.component.css',
+  templateUrl: './booking-page.component.html',
+  styleUrl: './booking-page.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class ProductListComponent {
-  protected readonly cartStore = inject(CartStoreService);
+export class BookingPageComponent {
+  protected readonly booking = inject(TicketBookingService);
+}
+```
 
-  readonly products = [
-    { productId: 'PRD-01', name: 'Ergonomic Split Keyboard', description: 'Alice layout mechanical switches', unitPrice: 8500, category: 'Peripherals' },
-    { productId: 'PRD-02', name: 'Wireless Vertical Mouse', description: '57-degree ergonomic angle', unitPrice: 3200, category: 'Peripherals' },
-    { productId: 'PRD-03', name: '27-inch 4K IPS Monitor', description: 'Factory-calibrated 99% sRGB 90W PD', unitPrice: 28990, category: 'Displays' }
-  ];
+### Arbitrary Triggering Page (`profile-page.component.ts`)
+[profile-page.component.ts](file:///d:/MyCode/My_GitHub/my-digital-space/Angular/concepts/Application_architecture/Shared_Services/src/app/features/profile/profile-page.component.ts)
+```typescript
+import { Component, ChangeDetectionStrategy, inject } from '@angular/core';
+import { NotifyService } from '../../core/services/notify.service';
 
-  onAddToCart(product: any): void {
-    this.cartStore.addItem({
-      productId: product.productId,
-      name: product.name,
-      unitPrice: product.unitPrice
-    });
+@Component({
+  selector: 'app-profile-page',
+  standalone: true,
+  templateUrl: './profile-page.component.html',
+  styleUrl: './profile-page.component.css',
+  changeDetection: ChangeDetectionStrategy.OnPush
+})
+export class ProfilePageComponent {
+  private readonly notify = inject(NotifyService);
+
+  onSave(): void {
+    // One simple call updates the banner anywhere in the app
+    this.notify.show('Profile saved!');
   }
 }
 ```
 
-### Checkout Summary Page (`checkout-page.component.ts`)
-[checkout-page.component.ts](file:///d:/MyCode/My_GitHub/my-digital-space/Angular/concepts/Application_architecture/Shared_Services/src/app/features/checkout/feature/checkout-page.component.ts)
+### Application Shell & Configuration (`app.ts` & `app.config.ts`)
+[app.ts](file:///d:/MyCode/My_GitHub/my-digital-space/Angular/concepts/Application_architecture/Shared_Services/src/app/app.ts) | [app.config.ts](file:///d:/MyCode/My_GitHub/my-digital-space/Angular/concepts/Application_architecture/Shared_Services/src/app/app.config.ts)
 ```typescript
-import { Component, ChangeDetectionStrategy, inject, signal } from '@angular/core';
-import { CurrencyPipe } from '@angular/common';
-import { CartStoreService } from '../../../shared/data-access/cart/cart-store.service';
+// src/app/app.ts
+import { Component, ChangeDetectionStrategy } from '@angular/core';
+import { NavbarComponent } from './core/layout/navbar/navbar.component';
+import { NotifyBannerComponent } from './shared/ui/notify-banner/notify-banner.component';
+import { BookingPageComponent } from './features/booking/booking-page.component';
+import { ProfilePageComponent } from './features/profile/profile-page.component';
 
 @Component({
-  selector: 'app-checkout-page',
+  selector: 'app-root',
   standalone: true,
-  imports: [CurrencyPipe],
-  templateUrl: './checkout-page.component.html',
-  styleUrl: './checkout-page.component.css',
+  imports: [NavbarComponent, NotifyBannerComponent, BookingPageComponent, ProfilePageComponent],
+  templateUrl: './app.html',
+  styleUrl: './app.css',
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class CheckoutPageComponent {
-  protected readonly cartStore = inject(CartStoreService);
-  protected readonly couponInput = signal('');
-
-  onApplyCoupon(): void {
-    this.cartStore.applyCoupon(this.couponInput());
-  }
-}
-```
-
-### Global Toast Container (`toast-container.component.ts`)
-[toast-container.component.ts](file:///d:/MyCode/My_GitHub/my-digital-space/Angular/concepts/Application_architecture/Shared_Services/src/app/shared/ui/toast-container/toast-container.component.ts)
-```typescript
-import { Component, ChangeDetectionStrategy, inject } from '@angular/core';
-import { ToastService } from '../../../core/services/toast.service';
-
-@Component({
-  selector: 'app-toast-container',
-  standalone: true,
-  templateUrl: './toast-container.component.html',
-  styleUrl: './toast-container.component.css',
-  changeDetection: ChangeDetectionStrategy.OnPush
-})
-export class ToastContainerComponent {
-  protected readonly toastService = inject(ToastService);
-}
-```
-
-### Application Configuration (`app.config.ts`)
-[app.config.ts](file:///d:/MyCode/My_GitHub/my-digital-space/Angular/concepts/Application_architecture/Shared_Services/src/app/app.config.ts)
-```typescript
-import { ApplicationConfig, provideBrowserGlobalErrorListeners } from '@angular/core';
-import { provideRouter } from '@angular/router';
-import { provideHttpClient, withInterceptors } from '@angular/common/http';
-import { routes } from './app.routes';
-import { mockApiInterceptor } from './core/interceptors/mock-api.interceptor';
-
-export const appConfig: ApplicationConfig = {
-  providers: [
-    provideBrowserGlobalErrorListeners(),
-    provideRouter(routes),
-    provideHttpClient(withInterceptors([mockApiInterceptor]))
-  ]
-};
+export class App {}
 ```
 
 ---
 
-## 8. Architectural Tradeoffs: Advantages vs Disadvantages
+## 9. Service Scoping Matrix: Root vs Route vs Component
+
+| Scope | How to Configure | Lifetime & Behavior | When to Use |
+| :--- | :--- | :--- | :--- |
+| **Root Singleton** | `@Injectable({ providedIn: 'root' })` | Created once upon first injection; lives for the lifespan of the browser tab/session. | Global notifications, ticket booking store, auth session, currency formatters. |
+| **Route-Scoped** | `providers: [WizardService]` inside a route configuration | Created when entering the route; automatically destroyed when leaving the route. | Multi-step booking wizards where state should reset on navigate away. |
+| **Component-Scoped** | `providers: [CounterService]` inside `@Component()` | A brand-new instance is created for each instance of that component and its subtree. | Reusable widgets (e.g. independent ticket counters on different stage tabs). |
+
+---
+
+## 10. Advantages & Tradeoffs Analysis
 
 | Advantages | Disadvantages | Enterprise Mitigation |
 | :--- | :--- | :--- |
-| **Single Source of Truth**: Eliminates duplicate calculations and keeps distant screens synchronized automatically. | **Memory Retention**: Root singletons stay resident in memory until tab closure; accumulating unbounded cache tables increases RAM. | Implement bounded cache invalidation (e.g. LRU) or reset mechanisms. |
-| **Clean, Thin Components**: Components focus strictly on UI presentation, passing user events to the service. | **Global State Mutation Risks**: If writable signals (`WritableSignal`) are exposed directly, external code can corrupt data. | Enforce encapsulation: private writable signals, public `.asReadonly()` exposures. |
-| **High Testability**: Business logic can be unit-tested in isolation with Vitest without mocking HTML templates or DOM events. | **"God Service" Anti-Pattern**: Dumping unrelated domains (auth + cart + theme + analytics) into a single monolithic class. | Segregate services strictly by bounded domain context (`CartStoreService`, `AuthService`, etc.). |
+| **Single Source of Truth**: Completely avoids out-of-sync badge counts and duplicate tax logic. | **Memory Retention**: Root singletons stay in memory until tab closure. | Clean up unnecessary data on booking completion (`countSignal.set(1)`). |
+| **Thin Components**: Components contain zero math or calculation logic; purely handle presentation and bind to signals. | **Mutation Risks**: If writable signals are exposed, any component can modify values arbitrarily. | Strict encapsulation: private writable signals, public `.asReadonly()` exposures. |
+| **High Testability**: Core business logic tests run in milliseconds without mounting DOM elements or HTML. | **Monolith Anti-Pattern**: Putting unrelated domains into one service. | Split domains into dedicated services (`TicketBookingService`, `NotifyService`). |
 
 ---
 
-## 9. Real-World Enterprise Patterns
+## 11. Development, Testing & Verification Guide
 
-1. **Authentication & Permission Service (`AuthService`)**:
-   - Manages user session, JWT token lifecycle, and role permissions (`isAdmin()`, `canApproveInvoice()`).
-   - Injected into functional Route Guards, HTTP Interceptors, and navigation UI components.
-2. **Feature Flag & Remote Configuration (`FeatureFlagService`)**:
-   - Retrieves feature toggles from remote edge endpoints during application bootstrap.
-   - Components read signals like `isNewCheckoutEnabled()` to render dark launches or A/B experiments.
-3. **Currency & Localization Service (`LocaleConfigService`)**:
-   - Tracks selected currency (`INR`, `USD`, `EUR`) and locale preference.
-   - Signals automatically trigger re-calculation of pricing pipes across every catalog and invoice card.
-4. **API Response Caching Service (`CatalogCacheService`)**:
-   - Stores master reference data (country lists, tax slabs, category taxonomies) in memory.
-   - Prevents redundant HTTP roundtrips as users navigate between features.
-
----
-
-## 10. Development, Testing & Verification Guide
-
-### 1. Build the Application
+### 1. Build the Production Bundle
 ```powershell
 npm.cmd run build
 ```
 
 ### 2. Run Comprehensive Unit Tests
-The project comes with complete Vitest unit test coverage for services and components:
+The project features 100% test passing coverage using Vitest:
 ```powershell
 npx.cmd ng test --watch=false
 ```
 
-### 3. Start the Development Server
+### 3. Start the Live Application
 ```powershell
 npm.cmd start
 ```
-Access the application at `http://localhost:4200` to interactively experience reactive state updates across the Top Navbar, Product Catalog, Checkout Page, and Toast Container.
+Navigate to `http://localhost:4200` to interact with the Ticket Booking Counter and verify reactive updates across the Navbar and Booking Card.

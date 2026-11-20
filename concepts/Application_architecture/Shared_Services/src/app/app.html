@@ -1,48 +1,64 @@
-<!-- Top Navigation Bar consuming CartStoreService totalItemCount -->
+<!-- Top Global Navbar reading TicketBookingService ticketCount() -->
 <app-navbar />
 
+<!-- Global Notification Banner reading NotifyService message() -->
+<app-notify-banner />
+
 <main class="main-container">
-  <!-- Architectural Banner -->
+  <!-- Educational Header Banner -->
   <header class="hero-banner">
-    <div class="banner-badge">Angular 22+ Architecture Lab</div>
-    <h1 class="hero-title">Shared Service Pattern: Singleton State & Signals</h1>
+    <div class="banner-badge">Angular 22+ Production Shared Services</div>
+    <h1 class="hero-title">Ticket Booking Counter & Notification Pattern</h1>
     <p class="hero-subtitle">
-      Demonstrating stateful business logic, reactive derived computations (<code>computed()</code>),
-      encapsulated writable signals, and cross-service HTTP orchestration without prop drilling.
+      Demonstrating <strong>Stateful Business Logic Service</strong> with <code>signal()</code>,
+      memoized derived calculations with <code>computed()</code>, and cross-service Dependency Injection
+      without prop drilling or redundant component math.
     </p>
 
+    <!-- Architecture flow pill -->
     <div class="architecture-flow-pill">
       <div class="flow-step">
         <span class="step-num">1</span>
-        <span>Product Catalog</span>
-        <span class="step-action">(Calls <code>addItem()</code>)</span>
+        <span>TicketBookingService</span>
+        <span class="step-action">(<code>ticketCount = signal(1)</code>)</span>
       </div>
       <span class="flow-arrow">➔</span>
       <div class="flow-step highlight">
         <span class="step-num">2</span>
-        <span>CartStoreService</span>
-        <span class="step-action">(Root Singleton State)</span>
+        <span>Automatic Computations</span>
+        <span class="step-action">(<code>subtotal()</code> & <code>finalTotal()</code>)</span>
       </div>
       <span class="flow-arrow">➔</span>
       <div class="flow-step">
         <span class="step-num">3</span>
-        <span>Navbar & Checkout</span>
-        <span class="step-action">(Reads derived signals)</span>
+        <span>Two Synchronized Consumers</span>
+        <span class="step-action">(Navbar + Booking Card)</span>
       </div>
     </div>
   </header>
 
-  <!-- Interactive Dual-Column Workspace -->
-  <div class="workspace-grid">
-    <div class="catalog-column">
-      <app-product-list />
+  <!-- Interactive Grid: Booking Card + Profile Page (to demo NotifyService) -->
+  <div class="grid-layout">
+    <div class="column">
+      <h2 class="column-title">1. Production Stateful Feature</h2>
+      <app-booking-page />
     </div>
 
-    <div class="checkout-column">
-      <app-checkout-page />
+    <div class="column">
+      <h2 class="column-title">2. Foundation Notification Feature</h2>
+      <app-profile-page />
+
+      <div class="clean-pattern-box">
+        <h4>Why This Pattern is So Clean:</h4>
+        <ul>
+          <li>
+            <strong>Zero Math in Components:</strong> Neither <code>NavbarComponent</code> nor <code>BookingPageComponent</code> knows that a ticket costs ₹500 or that GST is 18%. All pricing formulas live inside <code>TicketBookingService</code>.
+          </li>
+          <li>
+            <strong>Automatic Reactive Updates:</strong> Clicking <code>+</code> or <code>-</code> updates <code>countSignal</code>, which automatically recalibrates <code>subtotal()</code>, <code>gstAmount()</code>, <code>finalTotal()</code>, and the badge in <code>NavbarComponent</code> simultaneously!
+          </li>
+        </ul>
+      </div>
     </div>
   </div>
 </main>
-
-<!-- Global Toast Notifications Container -->
-<app-toast-container />

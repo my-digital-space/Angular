@@ -1,17 +1,14 @@
 <nav class="navbar">
   <div class="brand">
-    <div class="logo-mark">⚡</div>
-    <div class="brand-text">
-      <span class="brand-title">Enterprise Store</span>
-      <span class="brand-subtitle">Angular 22+ Singleton Shared Service</span>
+    <span class="brand-logo">🎟️</span>
+    <div class="brand-info">
+      <strong class="brand-title">Event Portal</strong>
+      <span class="brand-subtitle">Shared Service Singleton Architecture</span>
     </div>
   </div>
 
-  <div class="nav-actions">
-    <div class="cart-counter-pill" [class.has-items]="cartStore.totalItemCount() > 0">
-      <span class="cart-icon" aria-hidden="true">🛒</span>
-      <span class="cart-label">Cart Items:</span>
-      <span class="cart-badge">{{ cartStore.totalItemCount() }}</span>
-    </div>
+  <div class="ticket-status-pill">
+    <span class="pill-label">Selected Tickets:</span>
+    <span class="pill-count">{{ booking.ticketCount() }}</span>
   </div>
 </nav>

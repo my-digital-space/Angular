@@ -1,0 +1,58 @@
+<div class="booking-card">
+  <div class="card-header">
+    <span class="badge">Live Event</span>
+    <h3 class="event-title">Concert Pass</h3>
+    <p class="event-desc">
+      Premium arena pass. Price: <strong>₹500</strong> per ticket + 18% GST.
+    </p>
+  </div>
+
+  <!-- Quantity Controls -->
+  <div class="quantity-section">
+    <label class="section-label">Select Quantity:</label>
+    <div class="quantity-controls">
+      <button
+        type="button"
+        class="qty-btn"
+        (click)="booking.removeTicket()"
+        [disabled]="booking.ticketCount() <= 1"
+        aria-label="Decrease ticket count"
+      >
+        -
+      </button>
+      <span class="ticket-qty">{{ booking.ticketCount() }}</span>
+      <button
+        type="button"
+        class="qty-btn"
+        (click)="booking.addTicket()"
+        aria-label="Increase ticket count"
+      >
+        +
+      </button>
+    </div>
+  </div>
+
+  <!-- Live Calculated Prices -->
+  <div class="price-breakdown">
+    <div class="breakdown-row">
+      <span class="breakdown-label">Subtotal ({{ booking.ticketCount() }} × ₹500):</span>
+      <span class="breakdown-val">₹{{ booking.subtotal() }}</span>
+    </div>
+    <div class="breakdown-row">
+      <span class="breakdown-label">GST (18%):</span>
+      <span class="breakdown-val">₹{{ booking.gstAmount() }}</span>
+    </div>
+    <div class="breakdown-row total-row">
+      <h4>Total to Pay:</h4>
+      <h4 class="final-total">₹{{ booking.finalTotal() }}</h4>
+    </div>
+  </div>
+
+  <button
+    type="button"
+    class="book-btn"
+    (click)="booking.confirmBooking()"
+  >
+    Book Now (₹{{ booking.finalTotal() }})
+  </button>
+</div>

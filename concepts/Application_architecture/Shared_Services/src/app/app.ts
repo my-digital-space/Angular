@@ -1,22 +1,20 @@
-import { Component, ChangeDetectionStrategy, signal } from '@angular/core';
+import { Component, ChangeDetectionStrategy } from '@angular/core';
 import { NavbarComponent } from './core/layout/navbar/navbar.component';
-import { ProductListComponent } from './features/catalog/product-list.component';
-import { CheckoutPageComponent } from './features/checkout/feature/checkout-page.component';
-import { ToastContainerComponent } from './shared/ui/toast-container/toast-container.component';
+import { NotifyBannerComponent } from './shared/ui/notify-banner/notify-banner.component';
+import { BookingPageComponent } from './features/booking/booking-page.component';
+import { ProfilePageComponent } from './features/profile/profile-page.component';
 
 @Component({
   selector: 'app-root',
   standalone: true,
   imports: [
     NavbarComponent,
-    ProductListComponent,
-    CheckoutPageComponent,
-    ToastContainerComponent
+    NotifyBannerComponent,
+    BookingPageComponent,
+    ProfilePageComponent
   ],
   templateUrl: './app.html',
   styleUrl: './app.css',
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class App {
-  protected readonly appTitle = signal('Angular 22+ Shared Services (Production Pattern)');
-}
+export class App {}

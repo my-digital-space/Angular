@@ -1,16 +1,13 @@
 import { TestBed } from '@angular/core/testing';
-import { provideHttpClient } from '@angular/common/http';
-import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { App } from './app';
+import { TicketBookingService } from './shared/data-access/ticket-booking.service';
+import { NotifyService } from './core/services/notify.service';
 
 describe('App', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [App],
-      providers: [
-        provideHttpClient(),
-        provideHttpClientTesting()
-      ]
+      providers: [TicketBookingService, NotifyService]
     }).compileComponents();
   });
 
@@ -20,15 +17,12 @@ describe('App', () => {
     expect(app).toBeTruthy();
   });
 
-  it('should render header and shared service architecture title', async () => {
+  it('should render navbar and ticket booking components', async () => {
     const fixture = TestBed.createComponent(App);
     await fixture.whenStable();
     const compiled = fixture.nativeElement as HTMLElement;
-    expect(compiled.querySelector('.hero-title')?.textContent).toContain(
-      'Shared Service Pattern'
-    );
     expect(compiled.querySelector('app-navbar')).toBeTruthy();
-    expect(compiled.querySelector('app-product-list')).toBeTruthy();
-    expect(compiled.querySelector('app-checkout-page')).toBeTruthy();
+    expect(compiled.querySelector('app-booking-page')).toBeTruthy();
+    expect(compiled.querySelector('app-notify-banner')).toBeTruthy();
   });
 });
