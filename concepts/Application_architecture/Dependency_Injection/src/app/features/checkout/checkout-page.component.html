@@ -1,0 +1,137 @@
+<section class="checkout-container">
+  <div class="checkout-card">
+    <!-- Header -->
+    <div class="card-header">
+      <div class="badge-row">
+        <span class="badge-di">DI Consumer</span>
+        <span class="badge-contract">Contract Bound</span>
+      </div>
+      <h2 class="card-title">Secure Checkout</h2>
+      <p class="card-subtitle">
+        Injects abstract contracts (<code>UserSessionReader</code>, <code>PaymentGateway</code>, <code>APP_CONFIG</code>), remaining 100% agnostic to concrete runtime implementations.
+      </p>
+    </div>
+
+    <!-- Injected Values Grid -->
+    <div class="di-data-grid">
+      <!-- Session Reader Token (useExisting) -->
+      <div class="data-tile">
+        <div class="tile-header">
+          <span class="tile-icon">👤</span>
+          <span class="tile-title">Session Principal</span>
+        </div>
+        <div class="tile-body">
+          <span class="token-source">Via <code>UserSessionReader</code> (useExisting)</span>
+          <div class="user-pill">
+            <span class="status-indicator active"></span>
+            @if (userReader.currentUserName(); as name) {
+              <span class="user-value">{{ name }}</span>
+            } @else {
+              <span class="user-empty">Guest / Not Logged In</span>
+            }
+          </div>
+        </div>
+      </div>
+
+      <!-- APP_CONFIG Token (useValue) -->
+      <div class="data-tile">
+        <div class="tile-header">
+          <span class="tile-icon">⚙️</span>
+          <span class="tile-title">Environment Config</span>
+        </div>
+        <div class="tile-body">
+          <span class="token-source">Via <code>APP_CONFIG</code> (useValue)</span>
+          <div class="meta-row">
+            <span class="meta-label">API Gateway:</span>
+            <code class="meta-code">{{ config.apiBaseUrl }}</code>
+          </div>
+          <div class="meta-row">
+            <span class="meta-label">Max Attachment:</span>
+            <span class="meta-value">{{ config.maxUploadSizeMb }} MB</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- PaymentGateway Token (useFactory) -->
+      <div class="data-tile">
+        <div class="tile-header">
+          <span class="tile-icon">💳</span>
+          <span class="tile-title">Payment Provider</span>
+        </div>
+        <div class="tile-body">
+          <span class="token-source">Via <code>PaymentGateway</code> (useFactory)</span>
+          <div class="gateway-status">
+            <span class="mode-badge" [class.sandbox]="config.enableDebugLogs">
+              {{ config.enableDebugLogs ? 'Sandbox Mock Mode' : 'Razorpay Production' }}
+            </span>
+            <span class="mode-desc">
+              {{ config.enableDebugLogs ? 'Simulates instant sandbox responses' : 'Calls live production payment gateway' }}
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Product Summary -->
+    <div class="order-box">
+      <div class="order-row">
+        <div class="item-info">
+          <span class="item-name">Production Angular 22+ DI Architecture Guide</span>
+          <span class="item-meta">1x Full-Access License (Tier-1 Enterprise)</span>
+        </div>
+        <span class="item-price">₹1,499</span>
+      </div>
+      <div class="order-divider"></div>
+      <div class="order-total-row">
+        <span>Total Payable</span>
+        <span class="total-amount">₹1,499</span>
+      </div>
+    </div>
+
+    <!-- Payment Trigger CTA -->
+    <div class="action-bar">
+      <button
+        type="button"
+        class="pay-btn"
+        [disabled]="isProcessing()"
+        (click)="payNow()"
+      >
+        @if (isProcessing()) {
+          <span class="spinner-dot"></span>
+          <span>Processing ₹1,499...</span>
+        } @else {
+          <span class="btn-icon">⚡</span>
+          <span>Pay ₹1,499</span>
+        }
+      </button>
+
+      @if (receiptId()) {
+        <button type="button" class="reset-btn" (click)="resetReceipt()">
+          Clear Receipt
+        </button>
+      }
+    </div>
+
+    <!-- Receipt Notification (@if Control Flow) -->
+    @if (receiptId(); as id) {
+      <div class="receipt-box" role="status" aria-live="polite">
+        <div class="receipt-check">✓</div>
+        <div class="receipt-content">
+          <h4 class="receipt-title">Payment Successful!</h4>
+          <p class="receipt-msg">
+            Transaction ID: <span class="receipt-token">{{ id }}</span>
+          </p>
+          <span class="receipt-timestamp">Dispatched via resolved PaymentGateway strategy</span>
+        </div>
+      </div>
+    }
+
+    <!-- Payment Error Notification -->
+    @if (paymentError(); as error) {
+      <div class="error-box" role="alert">
+        <span class="error-icon">⚠️</span>
+        <span>{{ error }}</span>
+      </div>
+    }
+  </div>
+</section>

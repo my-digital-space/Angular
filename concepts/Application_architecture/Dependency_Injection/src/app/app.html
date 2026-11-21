@@ -1,0 +1,80 @@
+<div class="app-layout">
+  <!-- Top App Navigation / Header -->
+  <header class="app-header">
+    <div class="header-container">
+      <div class="brand-group">
+        <div class="brand-logo">
+          <span class="logo-symbol">⬡</span>
+        </div>
+        <div>
+          <h1 class="brand-title">Angular 22+ Production DI</h1>
+          <p class="brand-subtitle">Contract-Driven Architecture & Dependency Inversion</p>
+        </div>
+      </div>
+
+      <div class="header-controls">
+        <div class="version-badge">
+          <span class="pulse-indicator"></span>
+          <span>Angular v22+ Production</span>
+        </div>
+
+        <!-- Auth Store Session Controller Demonstration -->
+        <div class="session-controller">
+          <span class="session-label">Global Session:</span>
+          <button type="button" class="btn-toggle-user" (click)="toggleUser()" title="Click to cycle user or sign out">
+            @if (currentAppUser(); as user) {
+              <span class="user-active-dot"></span>
+              <span>{{ user }}</span>
+              <span class="btn-subtext">(Switch)</span>
+            } @else {
+              <span class="user-logged-out-dot"></span>
+              <span>Signed Out</span>
+              <span class="btn-subtext">(Login)</span>
+            }
+          </button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Production DI Architectural Summary Bar -->
+  <section class="di-architecture-bar">
+    <div class="arch-container">
+      <div class="arch-card">
+        <div class="arch-badge">useValue</div>
+        <div class="arch-content">
+          <span class="arch-heading">APP_CONFIG</span>
+          <p class="arch-desc">Typed <code>InjectionToken&lt;AppEnvironmentConfig&gt;</code> without class boilerplate.</p>
+        </div>
+      </div>
+
+      <div class="arch-card">
+        <div class="arch-badge factory">useFactory</div>
+        <div class="arch-content">
+          <span class="arch-heading">PaymentGateway</span>
+          <p class="arch-desc">Dynamic runtime instantiation (<code>SandboxMockGateway</code> vs <code>RazorpayGateway</code>).</p>
+        </div>
+      </div>
+
+      <div class="arch-card">
+        <div class="arch-badge existing">useExisting</div>
+        <div class="arch-content">
+          <span class="arch-heading">UserSessionReader</span>
+          <p class="arch-desc">Read-only facade aliasing <code>AuthStoreService</code> without duplicate instances.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Main View Loaded via Router Outlet -->
+  <main class="app-main">
+    <router-outlet></router-outlet>
+  </main>
+
+  <!-- Footer -->
+  <footer class="app-footer">
+    <div class="footer-container">
+      <p>Built with Angular 22+ • Strictly Standalone • Functional <code>inject()</code> • Reactive Signals • Control Flow <code>&#64;if</code></p>
+    </div>
+  </footer>
+</div>
