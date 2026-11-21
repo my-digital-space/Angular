@@ -1,0 +1,26 @@
+<header class="navbar">
+  <div class="nav-container">
+    <div class="brand-section">
+      <a routerLink="/" class="brand-link">
+        <span class="logo-icon">▲</span>
+        <div class="brand-text">
+          <span class="brand-title">Angular Design Patterns</span>
+          <span class="badge-version">v22+</span>
+        </div>
+      </a>
+    </div>
+
+    <nav class="nav-links" aria-label="Main Navigation">
+      @for (item of navItems; track item.path) {
+        <a 
+          [routerLink]="item.path" 
+          [routerLinkActiveOptions]="{ exact: item.exact }"
+          routerLinkActive="active" 
+          class="nav-link"
+        >
+          {{ item.label }}
+        </a>
+      }
+    </nav>
+  </div>
+</header>

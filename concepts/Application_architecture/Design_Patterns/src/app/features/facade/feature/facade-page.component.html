@@ -1,0 +1,278 @@
+<div class="pattern-detail-container">
+  <!-- Breadcrumb & Header -->
+  <div class="header-nav">
+    <a routerLink="/" class="back-link">&larr; Back to Design Patterns Overview</a>
+    <div class="header-tags">
+      <span class="badge badge-structural">Structural</span>
+      <span class="badge badge-angular22">Angular 22+</span>
+    </div>
+  </div>
+
+  <header class="pattern-header">
+    <h1 class="page-title">Facade Pattern in Modern Angular</h1>
+    <p class="page-subtitle">
+      Encapsulates complex, multi-service subsystem interactions behind a single, clean API for UI components.
+    </p>
+  </header>
+
+  <!-- Concept Helper Note -->
+  <div class="helper-box">
+    <strong>💡 What problem does this solve?</strong>
+    Without a Facade, components become "God Components" (600+ lines) directly injecting 6-8 different services (Cart, Loyalty, Tax, User, Analytics).
+    With a Facade, the component injects <em>only 1 service</em>: <code>inject(CheckoutFacade)</code>, and reads consolidated <code>computed()</code> signals.
+  </div>
+
+  <!-- Interactive Tabs -->
+  <div class="tab-bar">
+    <button 
+      type="button" 
+      class="tab-btn" 
+      [class.active]="activeTab() === 'checkout'" 
+      (click)="activeTab.set('checkout')"
+    >
+      🛒 Interactive Demo 1: Checkout Subsystem
+    </button>
+    <button 
+      type="button" 
+      class="tab-btn" 
+      [class.active]="activeTab() === 'dashboard'" 
+      (click)="activeTab.set('dashboard')"
+    >
+      👤 Interactive Demo 2: User Dashboard
+    </button>
+    <button 
+      type="button" 
+      class="tab-btn" 
+      [class.active]="activeTab() === 'architecture'" 
+      (click)="activeTab.set('architecture')"
+    >
+      📐 Architecture & Flow Diagrams
+    </button>
+  </div>
+
+  <!-- TAB 1: Checkout Facade Demo -->
+  @if (activeTab() === 'checkout') {
+    <div class="tab-content">
+      <div class="split-layout">
+        <!-- Interactive Controls -->
+        <div class="panel">
+          <div class="panel-header">
+            <h3>Cart Management (Subsystem Input)</h3>
+            <span class="badge badge-structural">Component View</span>
+          </div>
+
+          <div class="form-group-inline">
+            <input 
+              type="text" 
+              class="input-dark" 
+              placeholder="Product Name" 
+              [ngModel]="newItemName()" 
+              (ngModelChange)="newItemName.set($event)"
+            />
+            <input 
+              type="number" 
+              class="input-dark" 
+              placeholder="Price (INR)" 
+              style="width: 130px;"
+              [ngModel]="newItemPrice()" 
+              (ngModelChange)="newItemPrice.set($event)"
+            />
+            <button type="button" class="btn btn-primary" (click)="onAddCustomItem()">
+              + Add Item
+            </button>
+          </div>
+
+          <div class="tier-selector-box">
+            <label for="tierSelect"><strong>Loyalty Membership Tier:</strong></label>
+            <select id="tierSelect" class="select-dark" [value]="checkout.currentTier()" (change)="onTierChange($event)">
+              <option value="standard">Standard (0% discount)</option>
+              <option value="silver">Silver Tier (10% discount)</option>
+              <option value="gold">Gold Tier (15% discount)</option>
+              <option value="platinum">Platinum VIP (25% discount)</option>
+            </select>
+          </div>
+
+          <!-- Items Table -->
+          <div class="items-list">
+            <h4>Cart Items ({{ checkout.itemCount() }} total units)</h4>
+            @if (checkout.items().length === 0) {
+              <p class="empty-state">Your cart is currently empty. Add items above!</p>
+            } @else {
+              @for (item of checkout.items(); track item.id) {
+                <div class="item-row">
+                  <div class="item-info">
+                    <span class="item-name">{{ item.name }}</span>
+                    <span class="item-price">{{ item.price | currency:'INR':'symbol':'1.0-0' }} each</span>
+                  </div>
+                  <div class="item-actions">
+                    <button type="button" class="btn-qty" (click)="checkout.decrementQuantity(item.id)">-</button>
+                    <span class="qty-count">{{ item.quantity }}</span>
+                    <button type="button" class="btn-qty" (click)="checkout.incrementQuantity(item.id)">+</button>
+                    <button type="button" class="btn-remove" (click)="checkout.removeItem(item.id)">&times;</button>
+                  </div>
+                </div>
+              }
+            }
+          </div>
+        </div>
+
+        <!-- Facade Live Computation Output -->
+        <div class="panel highlight-panel">
+          <div class="panel-header">
+            <h3>CheckoutFacade Summary</h3>
+            <span class="badge badge-behavioral">Exposed Signals</span>
+          </div>
+
+          <div class="summary-card">
+            <div class="summary-line">
+              <span class="summary-label">Items Subtotal:</span>
+              <strong class="summary-val">{{ checkout.subtotal() | currency:'INR':'symbol':'1.0-0' }}</strong>
+            </div>
+
+            <div class="summary-line discount-line">
+              <span class="summary-label">
+                Loyalty Discount ({{ checkout.currentTier() | uppercase }} - {{ checkout.discountRate() * 100 }}%):
+              </span>
+              <strong class="summary-val discount-val">
+                -{{ checkout.discountAmount() | currency:'INR':'symbol':'1.0-0' }}
+              </strong>
+            </div>
+
+            <hr class="summary-hr" />
+
+            <div class="summary-line total-line">
+              <span class="summary-label">Final Payable:</span>
+              <strong class="summary-val total-val">
+                {{ checkout.finalPayable() | currency:'INR':'symbol':'1.0-0' }}
+              </strong>
+            </div>
+
+            <div class="action-box">
+              <button type="button" class="btn btn-success btn-block" (click)="checkout.processCheckout()">
+                💳 Confirm & Pay Order (Trigger Toast)
+              </button>
+            </div>
+
+            <div class="code-peek">
+              <p class="code-peek-title">Single Dependency Injected in Component:</p>
+              <code>protected readonly facade = inject(CheckoutFacade);</code>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- TAB 2: Dashboard Facade Demo -->
+  @if (activeTab() === 'dashboard') {
+    <div class="tab-content">
+      <div class="panel">
+        <div class="panel-header">
+          <h3>User Profile & Wallet Subsystem</h3>
+          <span class="badge badge-structural">UserDashboardFacade</span>
+        </div>
+
+        <div class="banner-display">
+          <div class="banner-icon">👋</div>
+          <div class="banner-text">
+            <h4>Live Reactive Greeting Banner</h4>
+            <p class="banner-quote">"{{ dashboard.welcomeBanner() }}"</p>
+          </div>
+        </div>
+
+        <div class="subsystem-controls-grid">
+          <!-- User Profile Subsystem -->
+          <div class="sub-card">
+            <h4>User Subsystem</h4>
+            <p class="sub-card-desc">State inside <code>UserService</code></p>
+            <div class="sub-form">
+              <input 
+                type="text" 
+                class="input-dark" 
+                placeholder="Enter new name" 
+                [ngModel]="customUserName()" 
+                (ngModelChange)="customUserName.set($event)"
+              />
+              <button type="button" class="btn btn-secondary btn-sm" (click)="onUpdateUserName()">
+                Update User Name
+              </button>
+            </div>
+          </div>
+
+          <!-- Wallet Subsystem -->
+          <div class="sub-card">
+            <h4>Wallet Subsystem</h4>
+            <p class="sub-card-desc">State inside <code>WalletService</code></p>
+            <div class="sub-card-val">Current Balance: ₹{{ dashboard.balanceInr() }}</div>
+            <div class="sub-btn-group">
+              <button type="button" class="btn btn-sm btn-success" (click)="dashboard.deposit(500)">
+                + Deposit ₹500
+              </button>
+              <button type="button" class="btn btn-sm btn-danger" (click)="dashboard.withdraw(200)">
+                - Withdraw ₹200
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- TAB 3: Architecture Diagram -->
+  @if (activeTab() === 'architecture') {
+    <div class="tab-content">
+      <div class="panel">
+        <div class="panel-header">
+          <h3>Facade Architecture Flow</h3>
+          <span class="badge badge-angular22">Design Flow</span>
+        </div>
+
+        <div class="diagram-box">
+          <pre class="flow-diagram">
+┌────────────────────────────────────────────────────────┐
+│             CheckoutSummaryComponent (Clean & Thin)    │
+│                        (injects ONLY 1 service)         │
+└───────────────────────────────┬────────────────────────┘
+                                │
+                                │ inject(CheckoutFacade)
+                                ▼
+┌────────────────────────────────────────────────────────┐
+│                    CheckoutFacade                      │
+│   • Coordinates multiple underlying services privately │
+│   • Computes derived signals (subtotal, finalPayable)  │
+│   • Exposes public actions to UI                       │
+└───────────────┬───────────────────────┬────────────────┘
+                │                       │
+                ▼                       ▼
+   ┌─────────────────────────┐  ┌────────────────────────┐
+   │    CartItemsService     │  │ LoyaltyDiscountService │
+   │ (items signal, updates) │  │  (tier, discount rate) │
+   └─────────────────────────┘  └────────────────────────┘
+          </pre>
+        </div>
+
+        <div class="comparison-grid">
+          <div class="compare-card bad">
+            <h4>❌ Without Facade Pattern</h4>
+            <ul>
+              <li>Component injects 6-8 different services.</li>
+              <li>Calculations (subtotal, taxes, discounts) leak into HTML or component class.</li>
+              <li>Unit testing requires mocking half the application's backend.</li>
+              <li>Tight coupling to internal store implementations.</li>
+            </ul>
+          </div>
+
+          <div class="compare-card good">
+            <h4>✓ With Facade Pattern</h4>
+            <ul>
+              <li>Component injects only 1 Facade.</li>
+              <li>All math & derivations live safely in testable <code>computed()</code> signals.</li>
+              <li>Unit testing only needs 1 mock facade.</li>
+              <li>Underlying stores can be refactored without breaking the UI.</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  }
+</div>

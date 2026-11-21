@@ -1,0 +1,28 @@
+<div class="toast-viewport" aria-live="polite" aria-atomic="true">
+  @for (toast of toasts(); track toast.id) {
+    <div 
+      class="toast-card" 
+      [class.toast-success]="toast.type === 'success'"
+      [class.toast-info]="toast.type === 'info'"
+      [class.toast-warning]="toast.type === 'warning'"
+      [class.toast-error]="toast.type === 'error'"
+    >
+      <div class="toast-indicator"></div>
+      <div class="toast-content">
+        <div class="toast-header">
+          <span class="toast-badge">{{ toast.type | uppercase }}</span>
+          <strong class="toast-title">{{ toast.title }}</strong>
+        </div>
+        <p class="toast-message">{{ toast.message }}</p>
+      </div>
+      <button 
+        type="button" 
+        class="toast-close" 
+        (click)="onDismiss(toast)" 
+        aria-label="Dismiss toast"
+      >
+        &times;
+      </button>
+    </div>
+  }
+</div>

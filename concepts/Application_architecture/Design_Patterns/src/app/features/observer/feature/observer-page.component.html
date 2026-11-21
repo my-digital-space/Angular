@@ -1,0 +1,253 @@
+<div class="pattern-detail-container">
+  <!-- Breadcrumb & Header -->
+  <div class="header-nav">
+    <a routerLink="/" class="back-link">&larr; Back to Design Patterns Overview</a>
+    <div class="header-tags">
+      <span class="badge badge-behavioral">Behavioral</span>
+      <span class="badge badge-angular22">Signals & effect()</span>
+    </div>
+  </div>
+
+  <header class="pattern-header">
+    <h1 class="page-title">Observer Pattern in Modern Angular</h1>
+    <p class="page-subtitle">
+      One piece of state (the Subject) automatically notifies any number of subscribers (Observers) the moment its value changes.
+    </p>
+  </header>
+
+  <!-- Concept Helper Note -->
+  <div class="helper-box">
+    <strong>💡 Built directly into Angular 22+:</strong>
+    Unlike legacy frameworks where you had to manually implement <code>subscribe()</code>, <code>unsubscribe()</code>, and prevent memory leaks, Angular 22+ implements the Observer Pattern natively:
+    <code>signal()</code> is the <strong>Subject</strong>, and <code>computed()</code>, <code>effect()</code>, and HTML templates are the <strong>Observers</strong> with automatic dependency tracking!
+  </div>
+
+  <!-- Interactive Tabs -->
+  <div class="tab-bar">
+    <button 
+      type="button" 
+      class="tab-btn" 
+      [class.active]="activeTab() === 'fontSize'" 
+      (click)="activeTab.set('fontSize')"
+    >
+      🔤 Demo 1: Dynamic Font & Multiple Observers
+    </button>
+    <button 
+      type="button" 
+      class="tab-btn" 
+      [class.active]="activeTab() === 'eventBus'" 
+      (click)="activeTab.set('eventBus')"
+    >
+      📡 Demo 2: Broadcast Event Bus & Multi-Subscribers
+    </button>
+    <button 
+      type="button" 
+      class="tab-btn" 
+      [class.active]="activeTab() === 'architecture'" 
+      (click)="activeTab.set('architecture')"
+    >
+      📐 Architecture & Reactivity Graph
+    </button>
+  </div>
+
+  <!-- TAB 1: Font Size Demo -->
+  @if (activeTab() === 'fontSize') {
+    <div class="tab-content">
+      <div class="split-layout">
+        <!-- Subject Controller -->
+        <div class="panel">
+          <div class="panel-header">
+            <h3>Subject: FontSizeService</h3>
+            <span class="badge badge-behavioral">Reactive State</span>
+          </div>
+
+          <p class="panel-desc">
+            The button clicks modify <code>fontSizePx = signal&lt;number&gt;(16)</code>. The subject does NOT notify components manually; observers react automatically!
+          </p>
+
+          <div class="font-controls-box">
+            <div class="current-size-display">
+              <span class="size-label">Current Signal Value:</span>
+              <span class="size-badge">{{ fontService.fontSizePx() }}px</span>
+            </div>
+
+            <div class="btn-group-actions">
+              <button type="button" class="btn btn-secondary" (click)="onDecreaseFont()" [disabled]="fontService.fontSizePx() <= 12">
+                - Decrease Text (A-)
+              </button>
+              <button type="button" class="btn btn-primary" (click)="onIncreaseFont()" [disabled]="fontService.fontSizePx() >= 26">
+                + Increase Text (A+)
+              </button>
+              <button type="button" class="btn btn-secondary btn-sm" (click)="onResetFont()">
+                Reset (16px)
+              </button>
+            </div>
+          </div>
+
+          <div class="code-peek">
+            <p class="code-peek-title">Observer inside FontSizeService constructor:</p>
+            <code>effect(() =&gt; &#123; document.documentElement.style.fontSize = ... &#125;)</code>
+          </div>
+        </div>
+
+        <!-- Multiple Independent Observers -->
+        <div class="panel highlight-panel">
+          <div class="panel-header">
+            <h3>Template Observers (Auto Re-rendering)</h3>
+            <span class="badge badge-structural">Multi-Observer View</span>
+          </div>
+
+          <!-- Observer Widget 1: Article Preview -->
+          <div class="observer-card">
+            <div class="observer-card-header">
+              <span class="obs-title">Observer 1: Article Reader Component</span>
+              <span class="obs-tag">fontSize: {{ fontService.fontSizePx() }}px</span>
+            </div>
+            <p class="sample-text" [style.fontSize.px]="fontService.fontSizePx()">
+              "Design patterns are proven, reusable architectural solutions to recurring software engineering problems. In modern Angular 22+, reactive signals power glitch-free, high-performance UI rendering."
+            </p>
+          </div>
+
+          <!-- Observer Widget 2: Status Indicator -->
+          <div class="observer-card">
+            <div class="observer-card-header">
+              <span class="obs-title">Observer 2: Accessibility Ratio Monitor</span>
+              <span class="obs-tag">Scale Factor: {{ (fontService.fontSizePx() / 16) | number:'1.2-2' }}x</span>
+            </div>
+            <div class="progress-bar-bg">
+              <div 
+                class="progress-bar-fill" 
+                [style.width.%]="((fontService.fontSizePx() - 12) / (26 - 12)) * 100"
+              ></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- TAB 2: Event Bus Demo -->
+  @if (activeTab() === 'eventBus') {
+    <div class="tab-content">
+      <div class="panel">
+        <div class="panel-header">
+          <h3>Push-Based Event Stream (Subject & Observers)</h3>
+          <span class="badge badge-behavioral">RxJS + Signals</span>
+        </div>
+
+        <p class="panel-desc">
+          Click an event below to broadcast. Notice how multiple independent subscriber panels update immediately without knowing about each other:
+        </p>
+
+        <div class="broadcast-buttons-row">
+          <button 
+            type="button" 
+            class="btn btn-primary" 
+            (click)="triggerSimulatedEvent('AuthGuard', 'SECURITY', 'User session verified via OAuth2 JWT')"
+          >
+            🛡️ Broadcast Security Event
+          </button>
+          <button 
+            type="button" 
+            class="btn btn-success" 
+            (click)="triggerSimulatedEvent('CheckoutProcessor', 'PAYMENT', 'Payment of ₹4,999 confirmed via UPI')"
+          >
+            💳 Broadcast Payment Event
+          </button>
+          <button 
+            type="button" 
+            class="btn btn-secondary" 
+            (click)="triggerSimulatedEvent('WarehouseService', 'INVENTORY', 'Low stock alert for SKU #RGB-883')"
+          >
+            📦 Broadcast Inventory Event
+          </button>
+        </div>
+
+        <div class="subscribers-grid">
+          <!-- Observer 1: Audit Log Subscriber -->
+          <div class="subscriber-panel">
+            <h4>Observer A: Security Audit Subscriber</h4>
+            <p class="sub-desc">Listening to <code>events$.subscribe()</code></p>
+            <div class="log-stream">
+              @if (auditSubscriberLogs().length === 0) {
+                <span class="empty-log">Awaiting broadcast events...</span>
+              } @else {
+                @for (log of auditSubscriberLogs(); track $index) {
+                  <div class="log-entry">{{ log }}</div>
+                }
+              }
+            </div>
+          </div>
+
+          <!-- Observer 2: Analytics Subscriber -->
+          <div class="subscriber-panel">
+            <h4>Observer B: Analytics Subscriber</h4>
+            <p class="sub-desc">Listening to <code>events$.subscribe()</code> independently</p>
+            <div class="log-stream">
+              @if (analyticsSubscriberLogs().length === 0) {
+                <span class="empty-log">Awaiting broadcast events...</span>
+              } @else {
+                @for (log of analyticsSubscriberLogs(); track $index) {
+                  <div class="log-entry analytics-entry">{{ log }}</div>
+                }
+              }
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- TAB 3: Architecture Diagram -->
+  @if (activeTab() === 'architecture') {
+    <div class="tab-content">
+      <div class="panel">
+        <div class="panel-header">
+          <h3>Observer Reactivity Architecture in Angular 22+</h3>
+          <span class="badge badge-angular22">Reactive Graph</span>
+        </div>
+
+        <div class="diagram-box">
+          <pre class="flow-diagram">
+                       ┌─────────────────────────┐
+                       │  Subject (State Holder) │
+                       │  theme = signal('dark') │
+                       └────────────┬────────────┘
+                                    │
+                                    │ Automatically notifies all observers
+                    ┌───────────────┴───────────────┐
+                    ▼                               ▼
+       ┌────────────────────────┐      ┌────────────────────────┐
+       │   NavbarComponent      │      │   SidebarComponent     │
+       │  (Template Observer)   │      │  (Template Observer)   │
+       └────────────────────────┘      └────────────────────────┘
+                    │                               │
+                    ▼                               ▼
+       Auto re-renders cleanly!         Auto re-renders cleanly!
+       (Zero manual subscriptions, zero ghost memory leaks!)
+          </pre>
+        </div>
+
+        <div class="comparison-grid">
+          <div class="compare-card bad">
+            <h4>❌ Imperative Manual Event Wiring</h4>
+            <ul>
+              <li>Needs manual <code>EventEmitter</code> or EventBus wiring everywhere.</li>
+              <li>Forgetting <code>subscription.unsubscribe()</code> creates memory leaks.</li>
+              <li>Prone to race conditions and out-of-order execution.</li>
+            </ul>
+          </div>
+
+          <div class="compare-card good">
+            <h4>✓ Angular 22+ Native Signals</h4>
+            <ul>
+              <li>Automatic dependency tracking during template execution.</li>
+              <li>Glitch-free push-pull evaluation graph.</li>
+              <li>Clean garbage collection without manual unsubscription chores.</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  }
+</div>

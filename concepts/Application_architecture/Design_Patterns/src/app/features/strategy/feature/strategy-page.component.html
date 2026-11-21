@@ -1,0 +1,270 @@
+<div class="pattern-detail-container">
+  <!-- Breadcrumb & Header -->
+  <div class="header-nav">
+    <a routerLink="/" class="back-link">&larr; Back to Design Patterns Overview</a>
+    <div class="header-tags">
+      <span class="badge badge-behavioral">Behavioral</span>
+      <span class="badge badge-angular22">InjectionToken multi: true</span>
+    </div>
+  </div>
+
+  <header class="pattern-header">
+    <h1 class="page-title">Strategy Pattern in Modern Angular</h1>
+    <p class="page-subtitle">
+      Defines a family of interchangeable algorithms, encapsulates each into its own class, and selects them dynamically at runtime without <code>if/else</code> chains.
+    </p>
+  </header>
+
+  <!-- Concept Helper Note -->
+  <div class="helper-box">
+    <strong>💡 Open/Closed Principle (SOLID):</strong>
+    Code should be <em>open for extension</em>, but <em>closed for modification</em>.
+    Using an <code>InjectionToken&lt;PaymentStrategy[]&gt;</code> with <code>multi: true</code>, adding a new payment gateway or export format only requires creating 1 new class and adding 1 line to the providers array. Existing tested code is untouched!
+  </div>
+
+  <!-- Interactive Tabs -->
+  <div class="tab-bar">
+    <button 
+      type="button" 
+      class="tab-btn" 
+      [class.active]="activeTab() === 'payments'" 
+      (click)="activeTab.set('payments')"
+    >
+      💳 Demo 1: Multi-Provider Payment Gateway
+    </button>
+    <button 
+      type="button" 
+      class="tab-btn" 
+      [class.active]="activeTab() === 'shipping'" 
+      (click)="activeTab.set('shipping')"
+    >
+      🚚 Demo 2: Dynamic Shipping Calculator
+    </button>
+    <button 
+      type="button" 
+      class="tab-btn" 
+      [class.active]="activeTab() === 'architecture'" 
+      (click)="activeTab.set('architecture')"
+    >
+      📐 Architecture & Multi-Token Details
+    </button>
+  </div>
+
+  <!-- TAB 1: Payment Strategy Demo -->
+  @if (activeTab() === 'payments') {
+    <div class="tab-content">
+      <div class="split-layout">
+        <!-- Strategy Selector Card -->
+        <div class="panel">
+          <div class="panel-header">
+            <h3>Select Payment Algorithm</h3>
+            <span class="badge badge-behavioral">Runtime Dispatch</span>
+          </div>
+
+          <p class="panel-instruction">
+            Each option below represents a dedicated TypeScript strategy class registered via <code>PAYMENT_STRATEGIES</code>:
+          </p>
+
+          <div class="strategies-options">
+            @for (method of paymentContext.availableMethods; track method.type) {
+              <label 
+                class="strategy-option-card"
+                [class.selected]="paymentContext.selectedMethod() === method.type"
+              >
+                <input 
+                  type="radio" 
+                  name="paymentMethod" 
+                  class="radio-input"
+                  [checked]="paymentContext.selectedMethod() === method.type" 
+                  (change)="onMethodChange(method.type)" 
+                />
+                <span class="method-icon">{{ method.icon }}</span>
+                <div class="method-details">
+                  <strong class="method-name">{{ method.displayName }}</strong>
+                  <span class="method-desc">{{ method.feeDescription }}</span>
+                </div>
+                @if (paymentContext.selectedMethod() === method.type) {
+                  <span class="active-badge">Active</span>
+                }
+              </label>
+            }
+          </div>
+
+          <div class="amount-input-box">
+            <label for="baseAmount"><strong>Base Order Amount (INR):</strong></label>
+            <div class="amount-stepper">
+              <button type="button" class="btn btn-secondary btn-sm" (click)="decrementAmount(500)">- ₹500</button>
+              <input 
+                id="baseAmount"
+                type="number" 
+                class="input-dark amount-input" 
+                [ngModel]="orderAmount()" 
+                (ngModelChange)="orderAmount.set($event)"
+              />
+              <button type="button" class="btn btn-secondary btn-sm" (click)="incrementAmount(500)">+ ₹500</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Strategy Calculation & Execution -->
+        <div class="panel highlight-panel">
+          <div class="panel-header">
+            <h3>Strategy Execution Summary</h3>
+            <span class="badge badge-structural">Dynamic Computation</span>
+          </div>
+
+          <div class="summary-card">
+            <div class="summary-line">
+              <span class="summary-label">Active Strategy:</span>
+              <strong class="summary-val text-primary">{{ paymentContext.activeStrategy().displayName }}</strong>
+            </div>
+
+            <div class="summary-line">
+              <span class="summary-label">Base Order Amount:</span>
+              <strong class="summary-val">{{ orderAmount() | currency:'INR':'symbol':'1.0-0' }}</strong>
+            </div>
+
+            <div class="summary-line fee-line">
+              <span class="summary-label">Calculated Convenience Fee:</span>
+              <strong class="summary-val fee-val">
+                +{{ convenienceFee() | currency:'INR':'symbol':'1.0-0' }}
+              </strong>
+            </div>
+
+            <hr class="summary-hr" />
+
+            <div class="summary-line total-line">
+              <span class="summary-label">Total to Deduct:</span>
+              <strong class="summary-val total-val">
+                {{ totalAmount() | currency:'INR':'symbol':'1.0-0' }}
+              </strong>
+            </div>
+
+            <div class="action-box">
+              <button type="button" class="btn btn-primary btn-block" (click)="onPay()">
+                ⚡ Execute {{ paymentContext.selectedMethod() }} Strategy (Toast UI)
+              </button>
+            </div>
+
+            @if (lastTxnMessage(); as txn) {
+              <div class="txn-success-box">
+                <span class="txn-check">✓</span>
+                <span class="txn-text">{{ txn }}</span>
+              </div>
+            }
+
+            <div class="code-peek">
+              <p class="code-peek-title">Zero if/else execution dispatch in Context:</p>
+              <code>return this.activeStrategy().executePayment(baseAmount);</code>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- TAB 2: Shipping Demo -->
+  @if (activeTab() === 'shipping') {
+    <div class="tab-content">
+      <div class="panel">
+        <div class="panel-header">
+          <h3>Dynamic Rate Calculation with Signal Strategy Swapping</h3>
+          <span class="badge badge-behavioral">Signal-Driven Strategy</span>
+        </div>
+
+        <div class="shipping-layout">
+          <div class="shipping-controls">
+            <h4>Select Shipping Provider Strategy</h4>
+            <div class="shipping-grid">
+              @for (strategy of shippingStrategies; track strategy.id) {
+                <div 
+                  class="shipping-card" 
+                  [class.active]="activeShippingStrategy().id === strategy.id"
+                  (click)="onShippingSelect(strategy)"
+                >
+                  <span class="shipping-icon">{{ strategy.icon }}</span>
+                  <h5>{{ strategy.label }}</h5>
+                  <p class="shipping-eta">{{ strategy.eta }}</p>
+                  <div class="shipping-cost-preview">
+                    Fee: ₹{{ strategy.calculateCost(shippingWeightKg()) }}
+                  </div>
+                </div>
+              }
+            </div>
+
+            <div class="weight-control-box">
+              <label for="weightRange">
+                Package Weight: <strong>{{ shippingWeightKg() }} kg</strong>
+              </label>
+              <input 
+                id="weightRange"
+                type="range" 
+                min="0.5" 
+                max="15" 
+                step="0.5" 
+                class="range-slider"
+                [ngModel]="shippingWeightKg()" 
+                (ngModelChange)="shippingWeightKg.set($event)"
+              />
+            </div>
+          </div>
+
+          <div class="shipping-summary-box">
+            <h4>Active Rate Computation</h4>
+            <div class="rate-result">
+              <div class="rate-icon">{{ activeShippingStrategy().icon }}</div>
+              <div class="rate-details">
+                <span class="rate-label">{{ activeShippingStrategy().label }}</span>
+                <span class="rate-eta">{{ activeShippingStrategy().eta }}</span>
+                <strong class="rate-price">₹{{ shippingCost() }}</strong>
+              </div>
+            </div>
+            <p class="rate-note">
+              <code>shippingCost = computed(() =&gt; activeStrategy().calculateCost(weightKg()))</code>
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- TAB 3: Architecture Tab -->
+  @if (activeTab() === 'architecture') {
+    <div class="tab-content">
+      <div class="panel">
+        <div class="panel-header">
+          <h3>Strategy Pattern Architecture & Multi-Token Registration</h3>
+          <span class="badge badge-angular22">Angular DI Mechanics</span>
+        </div>
+
+        <div class="diagram-box">
+          <pre class="flow-diagram">
+                       PaymentContextService
+                                │
+                                │ inject(PAYMENT_STRATEGIES)
+                                ▼
+ ┌────────────────────────────────────────────────────────────────────────┐
+ │ Array of Injected Strategies:                                          │
+ │ [ UpiPaymentStrategy, CardPaymentStrategy, NetBankingStrategy, Crypto] │
+ └──────────────────────────────┬─────────────────────────────────────────┘
+                                │
+                                │ O(1) Lookup: strategyMap.get(selectedMethod())
+                                ▼
+                       activeStrategy()
+                                │
+                                ▼
+         Delegates execution: activeStrategy().executePayment(amt)
+               (ZERO if / else chains inside any component!)
+          </pre>
+        </div>
+
+        <div class="helper-box warning">
+          <strong>⚠️ Critical Gotcha: The Missing <code>multi: true</code> Trap</strong>
+          When registering strategies under an <code>InjectionToken</code>, you MUST write:
+          <pre><code>&#123; provide: PAYMENT_STRATEGIES, useClass: UpiPaymentStrategy, multi: true &#125;</code></pre>
+          If you omit <code>multi: true</code>, Angular will silently overwrite earlier providers and only the last one will be available at runtime!
+        </div>
+      </div>
+    </div>
+  }
+</div>

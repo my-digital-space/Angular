@@ -1,0 +1,254 @@
+<div class="pattern-detail-container">
+  <!-- Breadcrumb & Header -->
+  <div class="header-nav">
+    <a routerLink="/" class="back-link">&larr; Back to Design Patterns Overview</a>
+    <div class="header-tags">
+      <span class="badge badge-structural">Structural</span>
+      <span class="badge badge-angular22">Clean Domain Models</span>
+    </div>
+  </div>
+
+  <header class="pattern-header">
+    <h1 class="page-title">Adapter Pattern in Modern Angular</h1>
+    <p class="page-subtitle">
+      Translates cryptic, snake_case external API responses into clean, strongly-typed UI domain models inside <code>data-access/</code>.
+    </p>
+  </header>
+
+  <!-- Concept Helper Note -->
+  <div class="helper-box">
+    <strong>💡 Why is an Adapter essential?</strong>
+    Backend teams often rename JSON fields (e.g., <code>cust_full_name</code> to <code>customerName</code>) or deliver prices in paise (cents).
+    Without an Adapter, 20+ HTML templates bind directly to raw backend DTOs and break instantly.
+    With an Adapter, components only bind to clean UI models; schema changes are isolated to <em>one pure function</em>!
+  </div>
+
+  <!-- Interactive Tabs -->
+  <div class="tab-bar">
+    <button 
+      type="button" 
+      class="tab-btn" 
+      [class.active]="activeTab() === 'employees'" 
+      (click)="activeTab.set('employees')"
+    >
+      👥 Demo 1: Employee DTO Adapter (Side-by-Side)
+    </button>
+    <button 
+      type="button" 
+      class="tab-btn" 
+      [class.active]="activeTab() === 'orders'" 
+      (click)="activeTab.set('orders')"
+    >
+      📦 Demo 2: Order DTO & Currency Normalization
+    </button>
+    <button 
+      type="button" 
+      class="tab-btn" 
+      [class.active]="activeTab() === 'architecture'" 
+      (click)="activeTab.set('architecture')"
+    >
+      📐 Architecture & Transformation Flow
+    </button>
+  </div>
+
+  <!-- TAB 1: Employee DTO Adapter Demo -->
+  @if (activeTab() === 'employees') {
+    <div class="tab-content">
+      <div class="actions-banner">
+        <span>Test Adapter Resilience:</span>
+        <button type="button" class="btn btn-sm btn-secondary" (click)="simulateBackendRefactor()">
+          🛡️ Simulate Backend Field Rename
+        </button>
+      </div>
+
+      <div class="split-layout">
+        <!-- Raw Backend JSON View -->
+        <div class="panel raw-panel">
+          <div class="panel-header">
+            <h3>Raw Backend API Response</h3>
+            <span class="badge badge-behavioral">EmployeeApiDto[]</span>
+          </div>
+
+          <p class="panel-desc">
+            Raw payload from legacy REST service with <code>snake_case</code>, un-trimmed whitespace, <code>'Y'/'N'</code> flags, and cents:
+          </p>
+
+          <div class="json-code-box">
+            <pre><code>{{ rawEmployees() | json }}</code></pre>
+          </div>
+
+          <div class="raw-actions-list">
+            <h4>Interact with Raw Backend Records:</h4>
+            @for (emp of rawEmployees(); track emp.emp_id) {
+              <div class="raw-item-action">
+                <span>#{{ emp.emp_id }}: "{{ emp.full_nm }}" (Flag: '{{ emp.is_active_flag }}')</span>
+                <div class="btn-group">
+                  <button type="button" class="btn btn-sm btn-secondary" (click)="onUpdateRawName(emp.emp_id, emp.full_nm)">
+                    Edit Raw Name
+                  </button>
+                  <button type="button" class="btn btn-sm btn-primary" (click)="onToggleEmployeeStatus(emp.emp_id)">
+                    Toggle 'Y'/'N'
+                  </button>
+                </div>
+              </div>
+            }
+          </div>
+        </div>
+
+        <!-- Adapted Clean UI View -->
+        <div class="panel highlight-panel">
+          <div class="panel-header">
+            <h3>Clean Angular UI Domain View</h3>
+            <span class="badge badge-structural">Employee[]</span>
+          </div>
+
+          <p class="panel-desc">
+            Transformed via <code>adaptEmployee()</code> pure function: trimmed strings, native booleans, formatted roles:
+          </p>
+
+          <div class="cards-stack">
+            @for (emp of uiEmployees(); track emp.id) {
+              <div class="employee-ui-card" [class.inactive]="!emp.isActive">
+                <div class="avatar">{{ emp.initials }}</div>
+                <div class="emp-details">
+                  <div class="emp-name-row">
+                    <strong>{{ emp.name }}</strong>
+                    <span class="status-badge" [class.active]="emp.isActive">
+                      {{ emp.isActive ? 'Active' : 'Inactive' }}
+                    </span>
+                  </div>
+                  <span class="emp-dept">{{ emp.department }}</span>
+                  <span class="emp-salary">Monthly: {{ emp.monthlySalaryUsd | currency:'USD':'symbol':'1.0-0' }}</span>
+                </div>
+              </div>
+            }
+          </div>
+
+          <div class="code-peek">
+            <p class="code-peek-title">Pure Adapter isolates the translation logic:</p>
+            <code>isActive: dto.is_active_flag === 'Y'</code>
+          </div>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- TAB 2: Order DTO Demo -->
+  @if (activeTab() === 'orders') {
+    <div class="tab-content">
+      <div class="split-layout">
+        <!-- Create Raw Order Form -->
+        <div class="panel">
+          <div class="panel-header">
+            <h3>Simulate Ingestion of REST Order</h3>
+            <span class="badge badge-angular22">DTO Ingestion</span>
+          </div>
+
+          <div class="order-form">
+            <div class="form-field">
+              <label for="custName">Customer Full Name (Raw string):</label>
+              <input 
+                id="custName" 
+                type="text" 
+                class="input-dark" 
+                [ngModel]="newCustomerName()" 
+                (ngModelChange)="newCustomerName.set($event)"
+              />
+            </div>
+
+            <div class="form-field">
+              <label for="orderAmount">Amount in Rupees (Backend stores in paise):</label>
+              <input 
+                id="orderAmount" 
+                type="number" 
+                class="input-dark" 
+                [ngModel]="newOrderRupees()" 
+                (ngModelChange)="newOrderRupees.set($event)"
+              />
+            </div>
+
+            <button type="button" class="btn btn-primary" (click)="onCreateOrder()">
+              + Ingest Raw Order Payload
+            </button>
+          </div>
+        </div>
+
+        <!-- Rendered Clean UI Orders -->
+        <div class="panel highlight-panel">
+          <div class="panel-header">
+            <h3>Clean Adapted Orders (UiOrder[])</h3>
+            <span class="badge badge-structural">Converted from Paise</span>
+          </div>
+
+          <div class="orders-list">
+            @for (order of uiOrders(); track order.id) {
+              <div class="order-card">
+                <div class="order-top">
+                  <span class="order-id">{{ order.id }}</span>
+                  <span class="order-badge" [class]="'badge-' + order.statusColor">
+                    {{ order.statusLabel }}
+                  </span>
+                </div>
+                <div class="order-customer">{{ order.customerName }}</div>
+                <div class="order-bottom">
+                  <span class="order-date">{{ order.formattedDate }}</span>
+                  <strong class="order-amount">{{ order.totalInRupees | currency:'INR':'symbol':'1.2-2' }}</strong>
+                </div>
+              </div>
+            }
+          </div>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- TAB 3: Architecture Diagram -->
+  @if (activeTab() === 'architecture') {
+    <div class="tab-content">
+      <div class="panel">
+        <div class="panel-header">
+          <h3>Adapter Architecture Pipeline</h3>
+          <span class="badge badge-angular22">Data Flow Pipeline</span>
+        </div>
+
+        <div class="diagram-box">
+          <pre class="flow-diagram">
+┌─────────────────────────┐
+│   Backend REST API      │
+│  &#123;                      │
+│    emp_id: 101,         │
+│    full_nm: "  Arun ",  │
+│    is_active_flag: "Y"  │
+│  &#125;                      │
+└────────────┬────────────┘
+             │ HttpClient GET
+             ▼
+┌─────────────────────────┐
+│     data-access/        │
+│  adaptEmployee(dto)     │ &lt;-- Pure Adapter Function
+│  • Trims whitespaces    │
+│  • Maps 'Y' to true     │
+│  • Converts cents/paise │
+└────────────┬────────────┘
+             │ Clean Ui Model
+             ▼
+┌─────────────────────────┐
+│   Angular Component     │
+│   &amp; HTML Template       │
+│  &#123;                      │
+│    id: 101,             │
+│    name: "Arun",        │
+│    isActive: true       │
+│  &#125;                      │
+└─────────────────────────┘
+          </pre>
+        </div>
+
+        <div class="helper-box success">
+          <strong>✓ Production Benefit: Single Point of Failure Fix</strong>
+          When backend engineers refactor API endpoints or replace legacy databases, you only update the adapter function. All 15+ Angular components, forms, and templates continue working without a single line changed.
+        </div>
+      </div>
+    </div>
+  }
+</div>

@@ -1,0 +1,157 @@
+<div class="home-container">
+  <!-- Hero Section -->
+  <header class="hero">
+    <div class="hero-badge">
+      <span class="pulse-dot"></span>
+      Angular 22+ Production Architecture
+    </div>
+    <h1 class="hero-title">Software Design Patterns in Modern Angular</h1>
+    <p class="hero-description">
+      Master architectural solutions to recurring frontend problems. Learn how 
+      <strong>Facade</strong>, <strong>Strategy</strong>, <strong>Adapter</strong>, and 
+      <strong>Observer</strong> patterns integrate with Angular 22+ primitives:
+      <code>inject()</code>, <code>signal()</code>, <code>computed()</code>, 
+      <code>effect()</code>, and Standalone Components.
+    </p>
+
+    <div class="stats-ribbon">
+      <div class="stat-item">
+        <span class="stat-number">4</span>
+        <span class="stat-label">Core Patterns</span>
+      </div>
+      <div class="stat-divider"></div>
+      <div class="stat-item">
+        <span class="stat-number">100%</span>
+        <span class="stat-label">Signals & Standalone</span>
+      </div>
+      <div class="stat-divider"></div>
+      <div class="stat-item">
+        <span class="stat-number">v22+</span>
+        <span class="stat-label">Strict Version Target</span>
+      </div>
+      <div class="stat-divider"></div>
+      <div class="stat-item">
+        <span class="stat-number">Interactive</span>
+        <span class="stat-label">Dark Theme Demos</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- Patterns Grid -->
+  <section class="section-patterns" aria-labelledby="patterns-heading">
+    <div class="section-header">
+      <h2 id="patterns-heading" class="section-title">Essential Angular Design Patterns</h2>
+      <p class="section-subtitle">Click on any pattern card to test its interactive sandbox and explore its architecture.</p>
+    </div>
+
+    <div class="cards-grid">
+      @for (pattern of patterns; track pattern.id) {
+        <article class="pattern-card">
+          <div class="card-top">
+            <span class="badge" [class.badge-structural]="pattern.category === 'Structural'" [class.badge-behavioral]="pattern.category === 'Behavioral'">
+              {{ pattern.category }}
+            </span>
+            <span class="card-badge-level">{{ pattern.badge }}</span>
+          </div>
+
+          <h3 class="card-title">{{ pattern.name }}</h3>
+          <p class="card-tagline">{{ pattern.tagline }}</p>
+
+          <div class="card-contrast-box">
+            <div class="contrast-row">
+              <span class="contrast-icon challenge">❌ Problem:</span>
+              <span class="contrast-text">{{ pattern.problem }}</span>
+            </div>
+            <div class="contrast-row">
+              <span class="contrast-icon solution">✓ Solution:</span>
+              <span class="contrast-text">{{ pattern.solution }}</span>
+            </div>
+          </div>
+
+          <ul class="highlights-list">
+            @for (item of pattern.highlights; track item) {
+              <li><span class="bullet">▸</span> {{ item }}</li>
+            }
+          </ul>
+
+          <div class="card-footer">
+            <a [routerLink]="pattern.route" class="card-link-btn">
+              <span>Launch {{ pattern.name }} Lab</span>
+              <span class="arrow-icon">→</span>
+            </a>
+          </div>
+        </article>
+      }
+    </div>
+  </section>
+
+  <!-- Interactive Decision Guide -->
+  <section class="section-decision" aria-labelledby="decision-heading">
+    <div class="decision-box">
+      <div class="section-header">
+        <span class="badge badge-angular22">Architectural Decision Tree</span>
+        <h2 id="decision-heading" class="section-title">Which Pattern Solves Your Problem?</h2>
+        <p class="section-subtitle">Select an engineering challenge below to inspect the recommended pattern and reason.</p>
+      </div>
+
+      <div class="scenarios-list">
+        @for (scenario of scenarios; track $index) {
+          <div 
+            class="scenario-item" 
+            [class.selected]="selectedScenario() === $index"
+            (click)="selectScenario($index)"
+          >
+            <div class="scenario-header">
+              <span class="scenario-icon">?</span>
+              <span class="scenario-problem">{{ scenario.problem }}</span>
+              <span class="scenario-toggle">{{ selectedScenario() === $index ? '−' : '+' }}</span>
+            </div>
+
+            @if (selectedScenario() === $index) {
+              <div class="scenario-body">
+                <div class="recommendation-badge">
+                  <span>Recommended: </span>
+                  <strong>{{ scenario.recommendedPattern }}</strong>
+                </div>
+                <p class="scenario-reason">{{ scenario.reason }}</p>
+                <a [routerLink]="scenario.patternRoute" class="btn btn-sm btn-primary">
+                  Go to {{ scenario.recommendedPattern }} &rarr;
+                </a>
+              </div>
+            }
+          </div>
+        }
+      </div>
+    </div>
+  </section>
+
+  <!-- Key Architecture Principles & Edge Cases -->
+  <section class="section-principles">
+    <h2 class="section-title">Critical Production Rules & Edge Cases</h2>
+    <div class="principles-grid">
+      <div class="principle-card">
+        <div class="principle-badge warning">Caution</div>
+        <h4>Never Omit <code>multi: true</code> on Tokens</h4>
+        <p>If you register multiple strategies into an <code>InjectionToken</code> without <code>multi: true</code>, Angular will silently overwrite earlier providers and only inject the last one.</p>
+      </div>
+
+      <div class="principle-card">
+        <div class="principle-badge warning">Anti-Pattern</div>
+        <h4>Avoid the "God Facade"</h4>
+        <p>A Facade must remain cohesive to a single feature domain. If a Facade expands beyond 300 lines and mixes billing, user preferences, and analytics, break it down.</p>
+      </div>
+
+      <div class="principle-card">
+        <div class="principle-badge info">Best Practice</div>
+        <h4>Don't Over-Engineer Small Rules</h4>
+        <p>Never implement 4 strategy classes for a trivial two-branch boolean check (e.g. <code>isAdmin ? 'Full' : 'Read'</code>). Apply Strategy when there are 3+ variants or frequent additions.</p>
+      </div>
+
+      <div class="principle-card">
+        <div class="principle-badge success">Maintainability</div>
+        <h4>Keep Adapters in <code>data-access/</code></h4>
+        <p>Place pure adapter mappers right next to HttpClient services. Never pass raw unmapped API DTOs into presentational components or UI templates.</p>
+      </div>
+    </div>
+  </section>
+</div>
