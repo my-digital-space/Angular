@@ -1,12 +1,26 @@
-import { Component, signal } from '@angular/core';
-import { RouterOutlet } from '@angular/router';
+import { Component, signal, inject } from '@angular/core';
+import { RouterOutlet, RouterLink, RouterLinkActive } from '@angular/router';
+import { ToastContainerComponent } from './components/toast-container.component';
+import { ToastService } from './services/toast.service';
+import { AuthService } from './services/auth.service';
 
 @Component({
-  imports: [RouterOutlet],
   selector: 'app-root',
-  styleUrl: './app.css',
+  standalone: true,
+  imports: [RouterOutlet, RouterLink, RouterLinkActive, ToastContainerComponent],
   templateUrl: './app.html',
+  styleUrl: './app.css'
 })
 export class App {
-  protected readonly title = signal('host');
+  readonly angularVersion = signal('Angular 22.3.0');
+  readonly auth = inject(AuthService);
+  readonly toast = inject(ToastService);
+
+  testToast(): void {
+    this.toast.show(
+      'info',
+      'Host Shell (Port 4200) is running with Native Federation and Dark Theme.',
+      'Host Shell Notification'
+    );
+  }
 }

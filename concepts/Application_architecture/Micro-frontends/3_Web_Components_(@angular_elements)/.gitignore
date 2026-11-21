@@ -1,0 +1,9 @@
+# Dependencies
+node_modules/
+**/node_modules/
+
+# Production and test outputs
+dist/
+**/dist/
+.angular/
+**/.angular/

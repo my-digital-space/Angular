@@ -1,0 +1,28 @@
+# Dependencies
+node_modules/
+**/node_modules/
+package-lock.json
+
+# Production and test outputs
+dist/
+**/dist/
+tmp/
+out-tsc/
+bazel-out/
+
+# Angular cache
+.angular/
+**/.angular/
+
+# Editor directories and files
+.idea/
+.vscode/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# OS metadata
+.DS_Store
+Thumbs.db

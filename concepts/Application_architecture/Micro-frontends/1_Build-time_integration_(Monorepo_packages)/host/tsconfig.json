@@ -3,6 +3,11 @@
 {
   "compileOnSave": false,
   "compilerOptions": {
+    "ignoreDeprecations": "6.0",
+    "paths": {
+      "@my-org/orders-mfe": ["../packages/orders-mfe/src/public-api.ts"],
+      "@my-org/billing-mfe": ["../packages/billing-mfe/src/public-api.ts"]
+    },
     "noImplicitOverride": true,
     "noPropertyAccessFromIndexSignature": true,
     "noImplicitReturns": true,

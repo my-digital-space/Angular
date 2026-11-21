@@ -1,0 +1,47 @@
+<div class="app-layout">
+  <!-- Top Navigation Header -->
+  <header class="navbar">
+    <div class="nav-brand">
+      <div class="brand-logo">MFE 3</div>
+      <div class="brand-text">
+        <span class="brand-title">Angular Elements Portal</span>
+        <span class="brand-subtitle">Web Components (&commat;angular/elements)</span>
+      </div>
+    </div>
+
+    <div class="nav-badges">
+      <div class="status-badge">
+        <span class="dot green"></span>
+        <span>Custom Element Active</span>
+      </div>
+      <div class="status-badge port">
+        <span>Host: Port 4200</span>
+      </div>
+      <div class="status-badge widget-port">
+        <span>Widget: Port 4203</span>
+      </div>
+    </div>
+
+    <div class="nav-actions">
+      <span class="version-tag">{{ angularVersion() }}</span>
+      <button class="btn btn-sm btn-outline" (click)="testToast()">
+        Host Toast
+      </button>
+    </div>
+  </header>
+
+  <!-- Main Content Viewport -->
+  <main class="main-content">
+    <app-dashboard></app-dashboard>
+  </main>
+
+  <!-- Footer -->
+  <footer class="app-footer">
+    <p>
+      Angular 22+ Production-Grade Micro-Frontends Practice • Pattern 3: Web Components (&commat;angular/elements)
+    </p>
+  </footer>
+
+  <!-- Toast Notification Overlay -->
+  <app-toast-container></app-toast-container>
+</div>

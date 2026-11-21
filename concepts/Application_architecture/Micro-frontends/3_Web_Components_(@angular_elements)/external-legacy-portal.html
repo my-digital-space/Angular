@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Legacy Customer Portal - Angular 22 Web Component Embed</title>
+  <style>
+    body {
+      background-color: #0b0f19;
+      color: #f8fafc;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+      margin: 0;
+      padding: 2.5rem;
+    }
+    .portal-box {
+      max-width: 800px;
+      margin: 0 auto;
+      background: #111827;
+      border: 1px solid #1f293d;
+      border-radius: 12px;
+      padding: 2rem;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+    }
+    .badge {
+      display: inline-block;
+      background: #d97706;
+      color: #fff;
+      font-weight: 700;
+      font-size: 0.75rem;
+      padding: 0.25rem 0.6rem;
+      border-radius: 4px;
+      margin-bottom: 0.75rem;
+    }
+    h1 { color: #f8fafc; margin-top: 0; }
+    p { color: #94a3b8; line-height: 1.6; }
+    .code-block {
+      background: #020617;
+      border: 1px solid #1e293b;
+      padding: 1rem;
+      border-radius: 8px;
+      font-family: monospace;
+      color: #38bdf8;
+      font-size: 0.85rem;
+      line-height: 1.5;
+    }
+    .action-row {
+      margin-top: 1.5rem;
+      display: flex;
+      gap: 1rem;
+    }
+    .btn {
+      background: #2563eb;
+      color: #fff;
+      padding: 0.5rem 1rem;
+      border-radius: 6px;
+      border: none;
+      cursor: pointer;
+      font-weight: 600;
+    }
+    .btn:hover { background: #1d4ed8; }
+    #event-banner {
+      margin-top: 1.5rem;
+      padding: 0.75rem 1rem;
+      background: #1e293b;
+      border-left: 4px solid #10b981;
+      border-radius: 6px;
+      display: none;
+      font-size: 0.85rem;
+      color: #34d399;
+    }
+  </style>
+</head>
+<body>
+  <div class="portal-box">
+    <span class="badge">Non-Angular Legacy Environment</span>
+    <h1>Legacy Enterprise Customer Portal (PHP / SSR / React)</h1>
+    <p>
+      This page is a plain HTML document with NO root Angular CLI app. It demonstrates how
+      an Angular 22 component compiled with <code>&#64;angular/elements</code> behaves like a native standard
+      HTML tag (like <code>&lt;video&gt;</code> or <code>&lt;input&gt;</code>) in any environment.
+    </p>
+
+    <div class="code-block">
+      &lt;!-- Just include the Web Component tag and script bundle --&gt;<br/>
+      &lt;support-chat-widget user-id="LEGACY-CUST-409"&gt;&lt;/support-chat-widget&gt;<br/>
+      &lt;script type="module" src="http://localhost:4203/main.js"&gt;&lt;/script&gt;
+    </div>
+
+    <div class="action-row">
+      <button class="btn" onclick="updateUserIdAttribute()">
+        Change user-id attribute dynamically
+      </button>
+    </div>
+
+    <div id="event-banner"></div>
+  </div>
+
+  <!-- The Custom Element in action -->
+  <support-chat-widget id="myChatWidget" user-id="LEGACY-CUST-409"></support-chat-widget>
+
+  <!-- Load Web Component bundle from port 4203 -->
+  <script type="module" src="http://localhost:4203/main.js"></script>
+
+  <script>
+    const widget = document.getElementById('myChatWidget');
+    const banner = document.getElementById('event-banner');
+
+    function updateUserIdAttribute() {
+      const newId = 'LEGACY-VIP-' + Math.floor(Math.random() * 900 + 100);
+      widget.setAttribute('user-id', newId);
+      showEvent('Set attribute user-id="' + newId + '". Angular Signal input automatically updated!');
+    }
+
+    // Listen to standard DOM CustomEvents emitted by Angular 22 output()
+    widget.addEventListener('chatClosed', function () {
+      showEvent('Native CustomEvent received: <chatClosed>');
+    });
+
+    widget.addEventListener('messageSent', function (e) {
+      showEvent('Native CustomEvent received: <messageSent> text="' + (e.detail ? e.detail.text : '') + '"');
+    });
+
+    function showEvent(msg) {
+      banner.style.display = 'block';
+      banner.textContent = msg;
+    }
+  </script>
+</body>
+</html>

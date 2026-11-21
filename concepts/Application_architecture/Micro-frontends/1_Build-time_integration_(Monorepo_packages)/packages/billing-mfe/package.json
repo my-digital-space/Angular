@@ -1,0 +1,7 @@
+{
+  "name": "@my-org/billing-mfe",
+  "version": "1.0.0",
+  "description": "Billing Micro-Frontend Workspace Package (Build-time integration)",
+  "private": true,
+  "main": "src/public-api.ts"
+}
